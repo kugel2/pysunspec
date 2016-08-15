@@ -274,7 +274,7 @@ class ModbusClientRTU(object):
         else:
             resp_slave_id, resp_func, resp_addr, resp_count, resp_crc = struct.unpack('>BBHHH', resp)
             if resp_slave_id != slave_id or resp_func != func or resp_addr != addr or resp_count != count:
-                raise ModbusClientError('Mobus response format error')
+                raise ModbusClientError('Modbus response format error')
 
     def write(self, slave_id, addr, data, trace_func=None, max_count=REQ_COUNT_MAX):
         write_count = 0
