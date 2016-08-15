@@ -46,7 +46,6 @@ def test_data(pathlist=None):
             raise Exception('XML mismatch: %s %s' % (xml, expected_xml))
 
     except Exception, e:
-        raise
         print '*** Failure test_data: %s' % str(e)
         return False
     return True

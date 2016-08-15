@@ -104,7 +104,6 @@ def test_modbus_client_device_tcp_read(pathlist=None):
         d.close()
 
     except Exception, e:
-        raise
         print '*** Failure test_modbus_client_device_tcp_read: %s' % str(e)
         return False
     return True

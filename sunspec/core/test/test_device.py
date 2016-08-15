@@ -305,7 +305,6 @@ def test_device_modeltype(pathlist=None):
             raise Exception('model type attribute error: id = %s  len = %d' % (mt.id, mt.len))
 
     except Exception, e:
-        raise
         print '*** Failure test_device_modeltype: %s' % (str(e))
         return False
 
@@ -421,7 +420,6 @@ def test_device_from_pics(pathlist=None):
         if not_equal:
             raise Exception(not_equal)
     except Exception, e:
-        raise
         print '*** Failure test_device_from_pics: %s' % str(e)
         return False
     return True
