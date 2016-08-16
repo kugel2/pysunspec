@@ -34,7 +34,7 @@ test_modules = [
     'test_data'
 ]
 
-def test_all(pathlist=None, stop_on_failure=False, local=False):
+def test_all(pathlist=None, stop_on_failure=False, local=False, raw_traceback=False):
 
     total_count_run = 0
     total_count_passed = 0
@@ -56,7 +56,7 @@ def test_all(pathlist=None, stop_on_failure=False, local=False):
 
     for m in test_modules:
         module = __import__(m)
-        (count_run, count_passed, count_failed) = module.test_all(pathlist, stop_on_failure)
+        (count_run, count_passed, count_failed) = module.test_all(pathlist, stop_on_failure, raw_traceback=raw_traceback)
         total_count_run += count_run
         total_count_passed += count_passed
         total_count_failed += count_failed

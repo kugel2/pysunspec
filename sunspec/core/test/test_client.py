@@ -25,12 +25,13 @@ from builtins import str
 
 import sys
 import os
+import traceback
 
 import sunspec.core.client as client
 import sunspec.core.device as device
 import sunspec.core.util as util
 
-def test_client_device(pathlist=None):
+def test_client_device(pathlist=None, raw_traceback=False):
 
     try:
         d = client.ClientDevice(client.MAPPED, slave_id=1, name='mbmap_test_device_1.xml', pathlist = pathlist)
@@ -44,11 +45,13 @@ def test_client_device(pathlist=None):
             raise Exception(not_equal)
 
     except Exception as e:
+        if raw_traceback:
+            traceback.print_exc(file=sys.stdout)
         print('*** Failure test_client_device: %s' % str(e))
         return False
     return True
 
-def test_sunspec_client_device_1(pathlist=None):
+def test_sunspec_client_device_1(pathlist=None, raw_traceback=False):
 
     try:
         d = client.SunSpecClientDevice(client.MAPPED, slave_id=1, name='mbmap_test_device_1.xml', pathlist = pathlist)
@@ -153,11 +156,13 @@ def test_sunspec_client_device_1(pathlist=None):
         d.close()
 
     except Exception as e:
+        if raw_traceback:
+            traceback.print_exc(file=sys.stdout)
         print('*** Failure test_sunspec_client_device_1: %s' % str(e))
         return False
     return True
 
-def test_sunspec_client_device_3(pathlist=None):
+def test_sunspec_client_device_3(pathlist=None, raw_traceback=False):
 
     try:
         d = client.SunSpecClientDevice(client.MAPPED, slave_id=1, name='mbmap_test_device_3.xml', pathlist = pathlist)
@@ -186,6 +191,8 @@ def test_sunspec_client_device_3(pathlist=None):
         d.close()
 
     except Exception as e:
+        if raw_traceback:
+            traceback.print_exc(file=sys.stdout)
         print('*** Failure test_sunspec_client_device_3: %s' % str(e))
         return False
     return True
@@ -196,7 +203,7 @@ tests = [
     test_sunspec_client_device_3
 ]
 
-def test_all(pathlist=None, stop_on_failure=True):
+def test_all(pathlist=None, stop_on_failure=True, raw_traceback=False):
 
     if pathlist is None:
         pathlist = util.PathList(['.', os.path.join(os.path.dirname(os.path.abspath(__file__)), 'devices')])
@@ -207,7 +214,7 @@ def test_all(pathlist=None, stop_on_failure=True):
 
     for test in tests:
         count_run += 1
-        if test(pathlist) is True:
+        if test(pathlist, raw_traceback=raw_traceback) is True:
             count_passed += 1
         else:
             count_failed += 1

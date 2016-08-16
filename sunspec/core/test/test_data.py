@@ -26,11 +26,12 @@ from builtins import str
 import sys
 import os
 import time
+import traceback
 
 import sunspec.core.data as data
 import sunspec.core.util as util
 
-def test_data(pathlist=None):
+def test_data(pathlist=None, raw_traceback=False):
     t = 1387560564.48
     expected_xml = '<sunSpecData><d lid="00:00:00:00:00:01" man="Man" mod="Mod" sn="SN" t="2013-12-20T17:29:24Z"><m id="1"><p id="P1">23</p><p id="P2">24</p></m></d></sunSpecData>'
 
@@ -48,6 +49,8 @@ def test_data(pathlist=None):
             raise Exception('XML mismatch: %s %s' % (xml, expected_xml))
 
     except Exception as e:
+        if raw_traceback:
+            traceback.print_exc(file=sys.stdout)
         print('*** Failure test_data: %s' % str(e))
         return False
     return True
@@ -56,7 +59,7 @@ tests = [
     test_data,
 ]
 
-def test_all(pathlist=None, stop_on_failure=True):
+def test_all(pathlist=None, stop_on_failure=True, raw_traceback=False):
 
     if pathlist is None:
         pathlist = util.PathList(['.', os.path.join(os.path.dirname(os.path.abspath(__file__)), 'devices')])
@@ -67,7 +70,7 @@ def test_all(pathlist=None, stop_on_failure=True):
 
     for test in tests:
         count_run += 1
-        if test(pathlist) is True:
+        if test(pathlist, raw_traceback=raw_traceback) is True:
             count_passed += 1
         else:
             count_failed += 1

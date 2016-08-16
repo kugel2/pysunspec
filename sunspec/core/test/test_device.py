@@ -25,6 +25,7 @@ from builtins import str
 
 import sys
 import os
+import traceback
 
 try:
     import xml.etree.ElementTree as ET
@@ -296,7 +297,7 @@ def create_test_device_1():
 
     return d
 
-def test_device_modeltype(pathlist=None):
+def test_device_modeltype(pathlist=None, raw_traceback=False):
     mt = device.ModelType()
 
     try:
@@ -307,12 +308,14 @@ def test_device_modeltype(pathlist=None):
             raise Exception('model type attribute error: id = %s  len = %d' % (mt.id, mt.len))
 
     except Exception as e:
+        if raw_traceback:
+            traceback.print_exc(file=sys.stdout)
         print('*** Failure test_device_modeltype: %s' % (str(e)))
         return False
 
     return True
 
-def test_device_pointtype(pathlist=None):
+def test_device_pointtype(pathlist=None, raw_traceback=False):
     points = {}
 
     try:
@@ -326,11 +329,13 @@ def test_device_pointtype(pathlist=None):
         if (pt.id != 'p_int16' or pt.offset != 0 or pt.type != suns.SUNS_TYPE_INT16 or pt.len != 1):
             raise Exception('p_int16 error')
     except Exception as e:
+        if raw_traceback:
+            traceback.print_exc(file=sys.stdout)
         print('*** Failure test_device_pointtype: %s' % (str(e)))
         return False
     return True
 
-def test_device_pointtype_not_equal(pathlist=None):
+def test_device_pointtype_not_equal(pathlist=None, raw_traceback=False):
     pt1 = device.PointType('point_1', 0, smdx.SMDX_TYPE_INT16)
     pt2 = device.PointType('point_1', 0, smdx.SMDX_TYPE_INT16)
     pt3 = device.PointType('point_1', 0, smdx.SMDX_TYPE_INT16)
@@ -344,11 +349,13 @@ def test_device_pointtype_not_equal(pathlist=None):
         if not_equal:
             raise Exception(not_equal)
     except Exception as e:
+        if raw_traceback:
+            traceback.print_exc(file=sys.stdout)
         print('*** Failure test_device_pointtype_not_equal: %s' % str(e))
         return False
     return True
 
-def test_device_blocktype_not_equal(pathlist=None):
+def test_device_blocktype_not_equal(pathlist=None, raw_traceback=False):
     pt1a = device.PointType('point_1', 0, suns.SUNS_TYPE_INT16)
     pt1b = device.PointType('point_1', 0, suns.SUNS_TYPE_INT16)
     pt2a = device.PointType('point_2', 0, suns.SUNS_TYPE_UINT16)
@@ -371,11 +378,13 @@ def test_device_blocktype_not_equal(pathlist=None):
         if not_equal:
             raise Exception(not_equal)
     except Exception as e:
+        if raw_traceback:
+            traceback.print_exc(file=sys.stdout)
         print('*** Failure test_device_blocktype_not_equal: %s' % str(e))
         return False
     return True
 
-def test_device_modeltype_not_equal(pathlist=None):
+def test_device_modeltype_not_equal(pathlist=None, raw_traceback=False):
     pt1a = device.PointType('point_1', 0, suns.SUNS_TYPE_INT16)
     pt1b = device.PointType('point_1', 0, suns.SUNS_TYPE_INT16)
     pt2a = device.PointType('point_2', 0, suns.SUNS_TYPE_UINT16)
@@ -401,19 +410,23 @@ def test_device_modeltype_not_equal(pathlist=None):
             raise Exception(not_equal)
 
     except Exception as e:
+        if raw_traceback:
+            traceback.print_exc(file=sys.stdout)
         print('*** Failure test_device_blocktype_not_equal: %s' % str(e))
         return False
     return True
 
-def test_device_model_type_get(pathlist=None):
+def test_device_model_type_get(pathlist=None, raw_traceback=False):
     try:
         device.model_type_get(221)
     except Exception as e:
+        if raw_traceback:
+            traceback.print_exc(file=sys.stdout)
         print('*** Failure test_model_type_get: %s' % str(e))
         return False
     return True
 
-def test_device_from_pics(pathlist=None):
+def test_device_from_pics(pathlist=None, raw_traceback=False):
     try:
         d1 = device.Device()
         d1.from_pics(filename='pics_test_device_1.xml', pathlist=pathlist)
@@ -422,11 +435,13 @@ def test_device_from_pics(pathlist=None):
         if not_equal:
             raise Exception(not_equal)
     except Exception as e:
+        if raw_traceback:
+            traceback.print_exc(file=sys.stdout)
         print('*** Failure test_device_from_pics: %s' % str(e))
         return False
     return True
 
-def test_device_to_pics(pathlist=None):
+def test_device_to_pics(pathlist=None, raw_traceback=False):
     try:
         d1 = device.Device()
         d1.from_pics(filename='pics_test_device_1.xml', pathlist=pathlist)
@@ -447,11 +462,13 @@ def test_device_to_pics(pathlist=None):
         if not_equal:
             raise Exception(not_equal)
     except Exception as e:
+        if raw_traceback:
+            traceback.print_exc(file=sys.stdout)
         print('*** Failure test_device_to_pics: %s' % str(e))
         return False
     return True
 
-def test_device_value_get(pathlist=None):
+def test_device_value_get(pathlist=None, raw_traceback=False):
     try:
         d = device.Device()
         d.from_pics(filename='pics_test_device_1.xml', pathlist=pathlist)
@@ -464,11 +481,13 @@ def test_device_value_get(pathlist=None):
             raise Exception("Value '%s' mismatch: %s %s" % (p, str(value), str(expected_value)))
 
     except Exception as e:
+        if raw_traceback:
+            traceback.print_exc(file=sys.stdout)
         print('*** Failure test_device_value_get: %s' % str(e))
         return False
     return True
 
-def test_device_value_set(pathlist=None):
+def test_device_value_set(pathlist=None, raw_traceback=False):
     try:
         d = device.Device()
         d.from_pics(filename='pics_test_device_1.xml', pathlist=pathlist)
@@ -482,11 +501,13 @@ def test_device_value_set(pathlist=None):
             raise Exception("Value '%s' mismatch: %s %s" % (p, str(value), str(expected_value)))
 
     except Exception as e:
+        if raw_traceback:
+            traceback.print_exc(file=sys.stdout)
         print('*** Failure test_device_value_get: %s' % str(e))
         return False
     return True
 
-def test_device_common_len_65(pathlist=None):
+def test_device_common_len_65(pathlist=None, raw_traceback=False):
     try:
         d = device.Device()
         d.from_pics(filename='pics_test_device_2.xml', pathlist=pathlist)
@@ -507,12 +528,14 @@ def test_device_common_len_65(pathlist=None):
             raise Exception("Value '%s' mismatch: %s %s" % (p, str(value), str(expected_value)))
 
     except Exception as e:
+        if raw_traceback:
+            traceback.print_exc(file=sys.stdout)
         print('*** Failure test_device_common_len_65: %s' % str(e))
         return False
     return True
 
 # verify all models in the default models directory can be read
-def test_device_models_smdx(pathlist=None):
+def test_device_models_smdx(pathlist=None, raw_traceback=False):
 
     path = device.model_type_path_default
     try:
@@ -524,12 +547,16 @@ def test_device_models_smdx(pathlist=None):
                 if model_id is not None:
                     device.model_type_get(model_id)
             except Exception as e:
+                if raw_traceback:
+                    traceback.print_exc(file=sys.stdout)
                 raise Exception('Error scanning model %s: %s' % (str(model_id), e))
     except Exception as e:
+        if raw_traceback:
+            traceback.print_exc(file=sys.stdout)
         raise Exception('Error scanning model directory %s: %s' % (path, e))
     return True
 
-def test_device_constant_sf(pathlist=None):
+def test_device_constant_sf(pathlist=None, raw_traceback=False):
     try:
         d = device.Device()
         d.from_pics(filename='pics_test_device_1.xml', pathlist=pathlist)
@@ -542,6 +569,8 @@ def test_device_constant_sf(pathlist=None):
             raise Exception("Value '%s' mismatch: %s %s" % (p, str(value), str(expected_value)))
 
     except Exception as e:
+        if raw_traceback:
+            traceback.print_exc(file=sys.stdout)
         print('*** Failure test_device_constant_sf: %s' % str(e))
         return False
     return True
@@ -561,7 +590,7 @@ test_device_tests = [
     test_device_constant_sf
 ]
 
-def test_all(pathlist=None, stop_on_failure=True):
+def test_all(pathlist=None, stop_on_failure=True, raw_traceback=False):
 
     if pathlist is not None:
         device.file_pathlist = pathlist
@@ -574,7 +603,7 @@ def test_all(pathlist=None, stop_on_failure=True):
 
     for test in test_device_tests:
         count_run += 1
-        if test(pathlist) is True:
+        if test(pathlist, raw_traceback=raw_traceback) is True:
             count_passed += 1
         else:
             count_failed += 1

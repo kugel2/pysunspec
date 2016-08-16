@@ -25,6 +25,7 @@ from builtins import str
 
 import sys
 import os
+import traceback
 
 try:
     import xml.etree.ElementTree as ET
@@ -35,7 +36,7 @@ import sunspec.core.device as device
 import sunspec.core.util as util
 import sunspec.core.modbus.mbmap as mbmap
 
-def test_modbus_mbmap_from_xml_file(pathlist=None):
+def test_modbus_mbmap_from_xml_file(pathlist=None, raw_traceback=False):
 
     try:
         m1 = mbmap.ModbusMap()
@@ -60,11 +61,13 @@ def test_modbus_mbmap_from_xml_file(pathlist=None):
             raise Exception(not_equal)
 
     except Exception as e:
+        if raw_traceback:
+            traceback.print_exc(file=sys.stdout)
         print('*** Failure test_modbus_mbmap_from_xml: %s' % str(e))
         return False
     return True
 
-def test_modbus_mbmap_from_xml_element(pathlist=None):
+def test_modbus_mbmap_from_xml_element(pathlist=None, raw_traceback=False):
 
     try:
         filename = os.path.join(pathlist.path[1], 'mbmap_test_device_1.xml')
@@ -96,6 +99,8 @@ def test_modbus_mbmap_from_xml_element(pathlist=None):
             raise Exception(not_equal)
 
     except Exception as e:
+        if raw_traceback:
+            traceback.print_exc(file=sys.stdout)
         print('*** Failure test_modbus_mbmap_from_xml: %s' % str(e))
         return False
     return True
@@ -104,7 +109,7 @@ tests = [
     test_modbus_mbmap_from_xml_file,
     test_modbus_mbmap_from_xml_element,]
 
-def test_all(pathlist=None, stop_on_failure=True):
+def test_all(pathlist=None, stop_on_failure=True, raw_traceback=False):
 
     if pathlist is None:
         pathlist = util.PathList(['.', os.path.join(os.path.dirname(os.path.abspath(__file__)), 'devices')])
@@ -115,7 +120,7 @@ def test_all(pathlist=None, stop_on_failure=True):
 
     for test in tests:
         count_run += 1
-        if test(pathlist) is True:
+        if test(pathlist, raw_traceback=raw_traceback) is True:
             count_passed += 1
         else:
             count_failed += 1
