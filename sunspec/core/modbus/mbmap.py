@@ -20,6 +20,12 @@
     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
     IN THE SOFTWARE.
 """
+from __future__ import division
+from __future__ import print_function
+from builtins import str
+from builtins import range
+from builtins import object
+from past.utils import old_div
 
 import struct
 
@@ -92,7 +98,7 @@ class ModbusMap(object):
             for line in f:
                 if line[0] != '#':
                     data_list = line.rstrip('\r\n').split()
-                    data_len = len(data_list)/2
+                    data_len = old_div(len(data_list),2)
                     if data_len > 0:
                         # print offset, data_list
                         for b in data_list:
@@ -102,10 +108,10 @@ class ModbusMap(object):
                             else:
                                 data += c
 
-            mmr = ModbusMapRegs(offset, len(data)/2, data, MBMAP_REGS_ACCESS_RW)
+            mmr = ModbusMapRegs(offset, old_div(len(data),2), data, MBMAP_REGS_ACCESS_RW)
             self.regs.append(mmr)
             f.close()
-        except Exception, e:
+        except Exception as e:
             try:
                 f.close()
             except:
@@ -183,13 +189,13 @@ class ModbusMap(object):
                     data = struct.pack('>l', int(text, 0))
                     rlen = 2
                 elif rtype == MBMAP_REGS_TYPE_U32:
-                    data = struct.pack('>L', long(text, 0))
+                    data = struct.pack('>L', int(text, 0))
                     rlen = 2
                 elif rtype == MBMAP_REGS_TYPE_S64:
-                    data = struct.pack('>q', long(text, 0))
+                    data = struct.pack('>q', int(text, 0))
                     rlen = 4
                 elif rtype == MBMAP_REGS_TYPE_U64:
-                    data = struct.pack('>Q', long(text, 0))
+                    data = struct.pack('>Q', int(text, 0))
                     rlen = 4
                 elif rtype == MBMAP_REGS_TYPE_F32:
                     data = struct.pack('>f', float(text))
@@ -199,7 +205,7 @@ class ModbusMap(object):
                     rlen = 4
                 elif rtype == MBMAP_REGS_TYPE_STRING:
                     if rlen == 0:
-                        rlen = (len(text) + 3)/4
+                        rlen = old_div((len(text) + 3),4)
                     data = struct.pack(str(rlen * 2) + 's', str(text))
                 elif rtype == MBMAP_REGS_TYPE_HEX_STRING:
                     if text:
@@ -209,7 +215,7 @@ class ModbusMap(object):
                     if text_len % 4 != 0:
                         raise ModbusMapError('Hex string content length must be a multiple of 4 bytes')
                     if rlen == 0:
-                        rlen = text_len/4
+                        rlen = old_div(text_len,4)
                     text_index = 0
                     while text_index < text_len:
                         c = struct.pack('B', int(text[text_index:text_index + 2], 16))
@@ -237,7 +243,7 @@ class ModbusMap(object):
                 else:
                     last_regs.append(offset, rlen, data, access)
 
-        except Exception, e:
+        except Exception as e:
             raise ModbusMapError('Error loading %s (%s) at offset %d - %s' % (filename, pathlist, offset, str(e)))
 
     def to_xml(self, parent=None, no_data=False):
@@ -325,7 +331,7 @@ class ModbusMap(object):
 
         # must have all requested data for success
         if len(data) != int(count) * 2:
-            print self
+            print(self)
             raise ModbusMapError('Data read error - addr = %d  data len = %d  count = %d' % (addr, len(data), count))
 
         return data
@@ -333,7 +339,7 @@ class ModbusMap(object):
     def write(self, addr, data):
 
         data_len = len(data)
-        count_remaining = data_len/2
+        count_remaining = old_div(data_len,2)
 
         if data_len % 2 != 0:
             raise ModbusMapError('Data length not even number of bytes - addr: %d  data len: %d' % (addr, data_len))
@@ -407,7 +413,7 @@ class ModbusMapRegs(object):
             raise ModbusMapError('Data read error')
 
     def write(self, offset, data):
-        count = len(data)/2
+        count = old_div(len(data),2)
         if (offset >= self.offset) and (offset + count <= self.offset + self.count):
             start = (offset - self.offset) * 2
             end = start + (count * 2)
@@ -428,7 +434,7 @@ class ModbusMapRegs(object):
         if self.data != regs.data:
             for i in range(len(self.data)):
                 if self.data[i] != regs.data[i]:
-                    return ('Data mismatch at offset %d' % (self.offset + (i/2)))
+                    return ('Data mismatch at offset %d' % (self.offset + (old_div(i,2))))
         if self.access != regs.access:
             return ('Access mismatch for offset %d' % (self.offset))
         return False

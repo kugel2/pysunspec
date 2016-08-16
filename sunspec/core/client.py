@@ -20,6 +20,10 @@
     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
     IN THE SOFTWARE.
 """
+from __future__ import division
+from builtins import str
+from builtins import object
+from past.utils import old_div
 
 import os
 import time
@@ -66,7 +70,7 @@ class ClientDevice(device.Device):
                     if self.modbus_device is not None:
                         self.modbus_device.close()
                     raise SunSpecClientError('Map file required for mapped device')
-        except modbus.ModbusClientError, e:
+        except modbus.ModbusClientError as e:
             if self.modbus_device is not None:
                 self.modbus_device.close()
             raise SunSpecClientError('Modbus error: %s' % str(e))
@@ -82,7 +86,7 @@ class ClientDevice(device.Device):
                 return self.modbus_device.read(addr, count)
             else:
                 raise SunSpecClientError('No modbus device set for SunSpec device')
-        except modbus.ModbusClientError, e:
+        except modbus.ModbusClientError as e:
             raise SunSpecClientError('Modbus read error: %s' % str(e))
 
     def write(self, addr, data):
@@ -92,7 +96,7 @@ class ClientDevice(device.Device):
                 return self.modbus_device.write(addr, data)
             else:
                 raise SunSpecClientError('No modbus device set for SunSpec device')
-        except modbus.ModbusClientError, e:
+        except modbus.ModbusClientError as e:
             raise SunSpecClientError('Modbus write error: %s' % str(e))
 
     def read_points(self):
@@ -124,7 +128,7 @@ class ClientDevice(device.Device):
                         break
                     else:
                         error = 'Device responded - not SunSpec register map'
-                except SunSpecClientError, e:
+                except SunSpecClientError as e:
                     if not error:
                         error = str(e)
 
@@ -153,7 +157,7 @@ class ClientDevice(device.Device):
                     # print 'loading model %s at %d' % (model_id, addr + 2)
                     try:
                         model.load()
-                    except Exception, e:
+                    except Exception as e:
                         model.load_error = str(e)
                     self.add_model(model)
 
@@ -208,14 +212,14 @@ class ClientModel(device.Model):
                         data += self.device.read(addr, read_len)
                 if data:
                     # print 'data len = ', len(data)
-                    data_len = len(data)/2
+                    data_len = old_div(len(data),2)
                     if data_len != self.len:
                         raise SunSpecClientError('Error reading model %s' % self.model_type)
 
                     #  for each repeating block
                     for block in self.blocks:
                         # scale factor points
-                        for pname, point in block.points_sf.iteritems():
+                        for pname, point in block.points_sf.items():
                             offset = int(point.addr) - int(self.addr)
                             if point.point_type.data_to is not None:
                                 byte_offset = offset * 2
@@ -227,7 +231,7 @@ class ClientModel(device.Model):
                                 raise SunSpecClientError('No data_to function set for %s : %s' % (pname, point.point_type))
 
                         # non-scale factor points
-                        for pname, point in block.points.iteritems():
+                        for pname, point in block.points.items():
                             offset = int(point.addr) - int(self.addr)
                             if point.point_type.data_to is not None:
                                 byte_offset = offset * 2
@@ -242,9 +246,9 @@ class ClientModel(device.Model):
                             else:
                                 raise SunSpecClientError('No data_to function set for %s : %s' % (pname, point.point_type))
 
-            except SunSpecError, e:
+            except SunSpecError as e:
                 raise SunSpecClientError(e)
-            except modbus.ModbusClientError, e:
+            except modbus.ModbusClientError as e:
                 raise SunSpecClientError('Modbus error: %s' % str(e))
             except:
                 raise
@@ -406,7 +410,7 @@ def model_class_get(model_id):
     model_type = None
     try:
         model_type = device.model_type_get(model_id)
-    except Exception, e:
+    except Exception as e:
         setattr(class_, 'load_error', str(e))
     if model_type is not None:
         for point_type in model_type.fixed_block.points_list:
@@ -465,7 +469,7 @@ class SunSpecClientDevice(object):
                 else:
                     setattr(self, name, model_class)
                     self.models.append(name)
-        except Exception, e:
+        except Exception as e:
             if self.device is not None:
                 self.device.close()
             raise

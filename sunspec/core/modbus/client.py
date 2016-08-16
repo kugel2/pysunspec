@@ -20,6 +20,11 @@
     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
     IN THE SOFTWARE.
 """
+from __future__ import division
+from builtins import str
+from builtins import range
+from builtins import object
+from past.utils import old_div
 
 import os
 import socket
@@ -116,7 +121,7 @@ class ModbusClientRTU(object):
                                           stopbits=1, xonxoff=0,
                                           timeout=self.timeout, writeTimeout=self.write_timeout)
 
-        except Exception, e:
+        except Exception as e:
             if self.serial is not None:
                 self.serial.close()
                 self.serial = None
@@ -127,7 +132,7 @@ class ModbusClientRTU(object):
         try:
             if self.serial is not None:
                 self.serial.close()
-        except Exception, e:
+        except Exception as e:
             raise ModbusClientError('Serial close error: %s' % str(e))
 
     def add_device(self, slave_id, device):
@@ -162,7 +167,7 @@ class ModbusClientRTU(object):
         self.serial.flushInput()
         try:
             self.serial.write(req)
-        except Exception, e:
+        except Exception as e:
             raise ModbusClientError('Serial write error: %s' % str(e))
 
         while len_remaining > 0:
@@ -225,7 +230,7 @@ class ModbusClientRTU(object):
         except_code = None
         func = FUNC_WRITE_MULTIPLE
         len_data = len(data)
-        count = len_data/2
+        count = old_div(len_data,2)
 
         req = struct.pack('>BBHHB', int(slave_id), func, int(addr), count, len_data)
         req += data
@@ -240,7 +245,7 @@ class ModbusClientRTU(object):
         self.serial.flushInput()
         try:
             self.serial.write(req)
-        except Exception, e:
+        except Exception as e:
             raise ModbusClientError('Serial write error: %s' % str(e))
 
         while len_remaining > 0:
@@ -279,7 +284,7 @@ class ModbusClientRTU(object):
     def write(self, slave_id, addr, data, trace_func=None, max_count=REQ_COUNT_MAX):
         write_count = 0
         write_offset = 0
-        count = len(data)/2
+        count = old_div(len(data),2)
 
         if self.serial is not None:
             while (count > 0):
@@ -371,7 +376,7 @@ class ModbusClientDeviceTCP(object):
             self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.socket.settimeout(timeout)
             self.socket.connect((self.ipaddr, self.ipport))
-        except Exception, e:
+        except Exception as e:
             raise ModbusClientError('Connection error: %s' % str(e))
 
     def disconnect(self):
@@ -400,7 +405,7 @@ class ModbusClientDeviceTCP(object):
 
         try:
             self.socket.sendall(req)
-        except Exception, e:
+        except Exception as e:
             raise ModbusClientError('Socket write error: %s' % str(e))
 
         while len_remaining > 0:
@@ -472,7 +477,7 @@ class ModbusClientDeviceTCP(object):
         func = FUNC_WRITE_MULTIPLE
 
         write_len = len(data)
-        write_count = write_len/2
+        write_count = old_div(write_len,2)
         req = struct.pack('>HHHBBHHB', 0, 0, TCP_WRITE_MULT_REQ_LEN + write_len, int(self.slave_id), func, int(addr), write_count, write_len)
         req += data
 
@@ -484,7 +489,7 @@ class ModbusClientDeviceTCP(object):
 
         try:
             self.socket.sendall(req)
-        except Exception, e:
+        except Exception as e:
             raise ModbusClientError('Socket write error: %s' % str(e))
 
         while len_remaining > 0:
@@ -520,7 +525,7 @@ class ModbusClientDeviceTCP(object):
         write_count = 0
         write_offset = 0
         local_connect = False
-        count = len(data)/2
+        count = old_div(len(data),2)
 
         if self.socket is None:
             local_connect = True

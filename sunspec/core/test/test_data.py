@@ -20,6 +20,8 @@
     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
     IN THE SOFTWARE.
 """
+from __future__ import print_function
+from builtins import str
 
 import sys
 import os
@@ -45,8 +47,8 @@ def test_data(pathlist=None):
         if xml != expected_xml:
             raise Exception('XML mismatch: %s %s' % (xml, expected_xml))
 
-    except Exception, e:
-        print '*** Failure test_data: %s' % str(e)
+    except Exception as e:
+        print('*** Failure test_data: %s' % str(e))
         return False
     return True
 
@@ -72,7 +74,7 @@ def test_all(pathlist=None, stop_on_failure=True):
             if stop_on_failure is True:
                 break
 
-    print 'Test data module: total tests: %d  tests run: %d  tests passed: %d  tests failed: %d' %  (len(tests), count_run, count_passed, count_failed)
+    print('Test data module: total tests: %d  tests run: %d  tests passed: %d  tests failed: %d' %  (len(tests), count_run, count_passed, count_failed))
 
     return (count_run, count_passed, count_failed)
 

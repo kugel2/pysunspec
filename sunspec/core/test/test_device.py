@@ -20,6 +20,8 @@
     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
     IN THE SOFTWARE.
 """
+from __future__ import print_function
+from builtins import str
 
 import sys
 import os
@@ -304,8 +306,8 @@ def test_device_modeltype(pathlist=None):
         if mt.id != 63001 or mt.len != 152:
             raise Exception('model type attribute error: id = %s  len = %d' % (mt.id, mt.len))
 
-    except Exception, e:
-        print '*** Failure test_device_modeltype: %s' % (str(e))
+    except Exception as e:
+        print('*** Failure test_device_modeltype: %s' % (str(e)))
         return False
 
     return True
@@ -323,8 +325,8 @@ def test_device_pointtype(pathlist=None):
         pt = points.get('p_int16')
         if (pt.id != 'p_int16' or pt.offset != 0 or pt.type != suns.SUNS_TYPE_INT16 or pt.len != 1):
             raise Exception('p_int16 error')
-    except Exception, e:
-        print '*** Failure test_device_pointtype: %s' % (str(e))
+    except Exception as e:
+        print('*** Failure test_device_pointtype: %s' % (str(e)))
         return False
     return True
 
@@ -341,8 +343,8 @@ def test_device_pointtype_not_equal(pathlist=None):
         not_equal = pt1.not_equal(pt3)
         if not_equal:
             raise Exception(not_equal)
-    except Exception, e:
-        print '*** Failure test_device_pointtype_not_equal: %s' % str(e)
+    except Exception as e:
+        print('*** Failure test_device_pointtype_not_equal: %s' % str(e))
         return False
     return True
 
@@ -368,8 +370,8 @@ def test_device_blocktype_not_equal(pathlist=None):
         not_equal = bt2a.not_equal(bt2b)
         if not_equal:
             raise Exception(not_equal)
-    except Exception, e:
-        print '*** Failure test_device_blocktype_not_equal: %s' % str(e)
+    except Exception as e:
+        print('*** Failure test_device_blocktype_not_equal: %s' % str(e))
         return False
     return True
 
@@ -398,16 +400,16 @@ def test_device_modeltype_not_equal(pathlist=None):
         if not_equal:
             raise Exception(not_equal)
 
-    except Exception, e:
-        print '*** Failure test_device_blocktype_not_equal: %s' % str(e)
+    except Exception as e:
+        print('*** Failure test_device_blocktype_not_equal: %s' % str(e))
         return False
     return True
 
 def test_device_model_type_get(pathlist=None):
     try:
         device.model_type_get(221)
-    except Exception, e:
-        print '*** Failure test_model_type_get: %s' % str(e)
+    except Exception as e:
+        print('*** Failure test_model_type_get: %s' % str(e))
         return False
     return True
 
@@ -419,8 +421,8 @@ def test_device_from_pics(pathlist=None):
         not_equal = d1.not_equal(d2)
         if not_equal:
             raise Exception(not_equal)
-    except Exception, e:
-        print '*** Failure test_device_from_pics: %s' % str(e)
+    except Exception as e:
+        print('*** Failure test_device_from_pics: %s' % str(e))
         return False
     return True
 
@@ -444,8 +446,8 @@ def test_device_to_pics(pathlist=None):
         not_equal = d1.not_equal(d2)
         if not_equal:
             raise Exception(not_equal)
-    except Exception, e:
-        print '*** Failure test_device_to_pics: %s' % str(e)
+    except Exception as e:
+        print('*** Failure test_device_to_pics: %s' % str(e))
         return False
     return True
 
@@ -461,8 +463,8 @@ def test_device_value_get(pathlist=None):
         if value != expected_value:
             raise Exception("Value '%s' mismatch: %s %s" % (p, str(value), str(expected_value)))
 
-    except Exception, e:
-        print '*** Failure test_device_value_get: %s' % str(e)
+    except Exception as e:
+        print('*** Failure test_device_value_get: %s' % str(e))
         return False
     return True
 
@@ -479,8 +481,8 @@ def test_device_value_set(pathlist=None):
         if value != expected_value:
             raise Exception("Value '%s' mismatch: %s %s" % (p, str(value), str(expected_value)))
 
-    except Exception, e:
-        print '*** Failure test_device_value_get: %s' % str(e)
+    except Exception as e:
+        print('*** Failure test_device_value_get: %s' % str(e))
         return False
     return True
 
@@ -504,8 +506,8 @@ def test_device_common_len_65(pathlist=None):
         if value != expected_value:
             raise Exception("Value '%s' mismatch: %s %s" % (p, str(value), str(expected_value)))
 
-    except Exception, e:
-        print '*** Failure test_device_common_len_65: %s' % str(e)
+    except Exception as e:
+        print('*** Failure test_device_common_len_65: %s' % str(e))
         return False
     return True
 
@@ -521,9 +523,9 @@ def test_device_models_smdx(pathlist=None):
                 model_id = smdx.model_filename_to_id(f)
                 if model_id is not None:
                     device.model_type_get(model_id)
-            except Exception, e:
+            except Exception as e:
                 raise Exception('Error scanning model %s: %s' % (str(model_id), e))
-    except Exception, e:
+    except Exception as e:
         raise Exception('Error scanning model directory %s: %s' % (path, e))
     return True
 
@@ -539,8 +541,8 @@ def test_device_constant_sf(pathlist=None):
         if value != expected_value:
             raise Exception("Value '%s' mismatch: %s %s" % (p, str(value), str(expected_value)))
 
-    except Exception, e:
-        print '*** Failure test_device_constant_sf: %s' % str(e)
+    except Exception as e:
+        print('*** Failure test_device_constant_sf: %s' % str(e))
         return False
     return True
 
@@ -579,7 +581,7 @@ def test_all(pathlist=None, stop_on_failure=True):
             if stop_on_failure is True:
                 break
 
-    print 'Test device module: total tests: %d  tests run: %d  tests passed: %d  tests failed: %d' %  (len(test_device_tests), count_run, count_passed, count_failed)
+    print('Test device module: total tests: %d  tests run: %d  tests passed: %d  tests failed: %d' %  (len(test_device_tests), count_run, count_passed, count_failed))
 
     return (count_run, count_passed, count_failed)
 

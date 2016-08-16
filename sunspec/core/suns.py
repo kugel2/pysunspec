@@ -20,6 +20,7 @@
     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
     IN THE SOFTWARE.
 """
+from builtins import str
 
 import sunspec.core.util as util
 
@@ -87,9 +88,9 @@ def suns_to_int(x):
 
 def suns_to_long(x):
     try:
-        return long(x, 0)
+        return int(x, 0)
     except TypeError:
-        return long(x)
+        return int(x)
 
 def suns_to_str(s):
     return str(s)

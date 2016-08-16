@@ -20,6 +20,12 @@
     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
     IN THE SOFTWARE.
 """
+from __future__ import division
+from __future__ import print_function
+from builtins import str
+from builtins import range
+from past.utils import old_div
+from builtins import object
 
 import os
 import math
@@ -116,14 +122,14 @@ class Device(object):
                 model = Model(self, model_id, addr + 2, model_len)
                 try:
                     model.load()
-                except Exception, e:
+                except Exception as e:
                     model.load_error = str(e)
                 model.from_pics(m)
                 self.add_model(model)
 
                 addr += model.len + 2
 
-        except Exception, e:
+        except Exception as e:
             raise SunSpecError('Error loading PICS: %s' % str(e))
 
     """
@@ -294,7 +300,7 @@ class Point(object):
     def value_setter(self, v):
 
         if self.value_sf:
-            self.value_base = int(round(float(v), abs(self.value_sf)) / math.pow(10, self.value_sf))
+            self.value_base = int(old_div(round(float(v), abs(self.value_sf)), math.pow(10, self.value_sf)))
         else:
             self.value_base = self.point_type.to_value(v)
 
@@ -329,7 +335,7 @@ class Point(object):
             attr[pics.PICS_ATTR_IMPLEMENTED] = str(pics.PICS_IMPLEMENTED_FALSE)
         else:
             if self.point_type.access != suns.SUNS_ACCESS_R:
-                access =  [key for key, value in pics.pics_access_types.iteritems() if value == suns.SUNS_ACCESS_RW][0]
+                access =  [key for key, value in pics.pics_access_types.items() if value == suns.SUNS_ACCESS_RW][0]
                 attr[pics.PICS_ATTR_ACCESS] = str(access)
 
         e = ET.SubElement(parent, pics.PICS_POINT, attrib=attr)
@@ -345,9 +351,9 @@ class Point(object):
         if (((self.value_base is not None or point.value_base is not None) and (self.value_base != point.value_base)) or
             ((self.value_sf is not None or point.value_sf is not None) and (self.value_sf != point.value_sf))):
             if self.value_base is not None:
-                print 'self.value_base'
+                print('self.value_base')
             if point.value_base is not None:
-                print 'point.value_base', type(point.value_base), point.value_base
+                print('point.value_base', type(point.value_base), point.value_base)
             return 'point %s not equal: %s %s - %s %s' % (self.point_type.id, self.value_base, self.value_sf, point.value_base, point.value_sf)
         return False
 
@@ -554,7 +560,7 @@ def model_type_get(model_id):
                     f = open(filename, 'r')
                     smdx_data = f.read()
                     f.close()
-                except Exception, e:
+                except Exception as e:
                     raise SunSpecError('Error loading model %s at %s: %s' % (model_id, filename, str(e)))
 
         if smdx_data:
@@ -565,7 +571,7 @@ def model_type_get(model_id):
                 model_type = ModelType()
                 model_type.from_smdx(root)
                 model_types[model_type.id] = model_type
-            except Exception, e:
+            except Exception as e:
                 raise SunSpecError('Error loading model %s at %s: %s' % (model_id, filename, str(e)))
         else:
             raise SunSpecError('Model file for model %s not found' % (str(model_id)))
@@ -741,7 +747,7 @@ class BlockType(object):
             return "BlockType attribute 'len' not equal: %s  %s" % (str(self.len), str(block_type.len))
         if len(self.points) != len(block_type.points):
             return "BlockType '%s' point count not equal" % (str(self.type))
-        for k, v in self.points.items():
+        for k, v in list(self.points.items()):
             value = block_type.points.get(k)
             not_equal =  v.not_equal(value)
             if not_equal:
@@ -849,7 +855,7 @@ class PointType(object):
             return "PointType '%s' is None" % (str(self.id))
         if len(self.__dict__) != len(point_type.__dict__):
             return "PointType '%s' attribute count not equal': %s  %s" % (str(self.id))
-        for k, v in self.__dict__.items():
+        for k, v in list(self.__dict__.items()):
             if k != 'block_type':
                 value = point_type.__dict__.get(k)
                 if v is not None and value is not None:

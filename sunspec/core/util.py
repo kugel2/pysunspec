@@ -20,6 +20,8 @@
     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
     IN THE SOFTWARE.
 """
+from builtins import str
+from builtins import object
 
 import os
 import struct
@@ -223,7 +225,7 @@ class PathList(object):
                 zip_file = zipfile.ZipFile(zip_file_path)
                 try:
                     zip_file.getinfo(file_path)
-                except Exception, e:
+                except Exception as e:
                     continue
                 return zip_file.read(file_path)
             else:
