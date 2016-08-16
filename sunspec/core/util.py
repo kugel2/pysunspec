@@ -171,7 +171,7 @@ class PathList(object):
 
     """ Add path to path list
 
-    Provides a list of file system paths to search for non-python files similar to sys.path for python 
+    Provides a list of file system paths to search for non-python files similar to sys.path for python
     modules. Zipfiles can be included in a path name and the contents of the zipfile will be searched
     based on the remaining path content. Zip file support has the following restrictions: only one zip file
     in a path, zi pfiles must have a .zip extension in the name, directories can not end in .zip.
@@ -244,7 +244,3 @@ class PathList(object):
             paths.append(p)
 
         return str(paths)
-
-
-
-

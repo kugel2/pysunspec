@@ -44,11 +44,11 @@ def test_all(pathlist=None, stop_on_failure=False, local=False):
 
     # add current directory path if local is true
     if local:
-    	local_path = os.path.join(current_path, '..', '..', '..')
-    	if sys.path[1] != local_path:
-    		print 'Adding local path: ', local_path
-    		sys.path.insert(1, local_path)
-    	else:
+        local_path = os.path.join(current_path, '..', '..', '..')
+        if sys.path[1] != local_path:
+            print 'Adding local path: ', local_path
+            sys.path.insert(1, local_path)
+        else:
             print 'Using local path: ', local_path
 
     print 'pySunSpec version: %s\nTest device path: %s\n' % (sunspec.version, os.path.join(current_path, 'devices'))
@@ -68,7 +68,7 @@ if __name__ == "__main__":
     local = False
 
     if len(sys.argv) > 1 and sys.argv[1] == 'local':
-    	local = True
+        local = True
 
     (count_run, count_passed, count_failed) = test_all(local=local)
     sys.exit(count_failed)

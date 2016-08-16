@@ -95,9 +95,9 @@ if __name__ == "__main__":
             print '\nmodel: %s\n' % (label)
             for block in model.blocks:
                 if block.index > 0:
-                  index = '%02d:' % (block.index)
+                    index = '%02d:' % (block.index)
                 else:
-                  index = '   '
+                    index = '   '
                 for point in block.points_list:
                     if point.value is not None:
                         if point.point_type.label:
@@ -114,4 +114,3 @@ if __name__ == "__main__":
                         else:
                             value = str(point.value).rstrip('\0')
                         print '%-40s %20s %-10s' % (label, value, str(units))
-

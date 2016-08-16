@@ -122,7 +122,7 @@ class Device(object):
                 self.add_model(model)
 
                 addr += model.len + 2
-        
+
         except Exception, e:
             raise SunSpecError('Error loading PICS: %s' % str(e))
 
@@ -252,7 +252,7 @@ class Point(object):
         self.value_sf = None
         self.dirty = False
 
-    """ 
+    """
     @property
     def value(self):
         if self.value_sf:
@@ -299,7 +299,7 @@ class Point(object):
             self.value_base = self.point_type.to_value(v)
 
         self.dirty = True
-    
+
     value = property(value_getter, value_setter, None)
 
     def from_pics(self, element):
@@ -350,7 +350,7 @@ class Point(object):
                 print 'point.value_base', type(point.value_base), point.value_base
             return 'point %s not equal: %s %s - %s %s' % (self.point_type.id, self.value_base, self.value_sf, point.value_base, point.value_sf)
         return False
-        
+
     def __str__(self):
         point_str = 'Point: id = %s impl= %s addr = %s value_base = %s' % (self.point_type.id, str(self.impl), self.addr, str(self.value_base))
         if self.sf_point is not None:
@@ -537,7 +537,7 @@ def model_type_get(model_id):
         smdx_data = ''
         # create model file name
         filename = smdx.model_id_to_filename(model_id)
- 
+
         # check in file path list if set
         if file_pathlist is not None:
             try:
@@ -556,7 +556,7 @@ def model_type_get(model_id):
                     f.close()
                 except Exception, e:
                     raise SunSpecError('Error loading model %s at %s: %s' % (model_id, filename, str(e)))
-      
+
         if smdx_data:
             root = ET.fromstring(smdx_data)
 

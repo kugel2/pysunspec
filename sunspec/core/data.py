@@ -62,9 +62,9 @@ class SunSpecData(object):
 
     def device_add(self, logger_id=None, man=None, mod=None, sn=None, timestamp=None, cid=None, device_id=None, ifc=None, namespace=None):
 
-    	d = DeviceData(logger_id,  man, mod, sn, timestamp, cid, device_id, ifc, namespace)
-    	self.device_data.append(d)
-    	return d
+        d = DeviceData(logger_id,  man, mod, sn, timestamp, cid, device_id, ifc, namespace)
+        self.device_data.append(d)
+        return d
 
     def from_xml(self, element=None, data_record=None):
 
@@ -129,9 +129,9 @@ class DeviceData(object):
 
     def model_add(self, model_id=None, index=None, namespace=None):
 
-    	m = ModelData(model_id, namespace, index)
-    	self.model_data.append(m)
-    	return m
+        m = ModelData(model_id, namespace, index)
+        self.model_data.append(m)
+        return m
 
     def timestamp_add(self, timestamp=None):
 
@@ -212,9 +212,9 @@ class ModelData(object):
 
     def point_add(self, point_id=None, value=None, index=None, sf=None, units=None, desc=None, time=None):
 
-    	p = PointData(point_id, value, index, sf, units, desc, time)
-    	self.point_data.append(p)
-    	return p
+        p = PointData(point_id, value, index, sf, units, desc, time)
+        self.point_data.append(p)
+        return p
 
     def from_xml(self, element):
 
@@ -287,5 +287,3 @@ class PointData(object):
         e = ET.SubElement(parent, SDX_POINT, attrib=attr)
         if self.value is not None:
             e.text = str(self.value)
-
-

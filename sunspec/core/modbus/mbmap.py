@@ -253,7 +253,7 @@ class ModbusMap(object):
             attr[MBMAP_MAPID] = str(self.mapid)
         if self.time is not None:
             attr[MBMAP_TIME] = str(self.time)
- 
+
         if parent is None:
             element = ET.Element(MBMAP_ROOT, attrib=attr)
         else:
@@ -329,7 +329,7 @@ class ModbusMap(object):
             raise ModbusMapError('Data read error - addr = %d  data len = %d  count = %d' % (addr, len(data), count))
 
         return data
-    
+
     def write(self, addr, data):
 
         data_len = len(data)
@@ -360,7 +360,7 @@ class ModbusMap(object):
 
         # must have written all data for success
         if count_remaining > 0:
-           raise ModbusMapError('Data write error')
+            raise ModbusMapError('Data write error')
 
     def not_equal(self, mbmap):
 
@@ -413,7 +413,7 @@ class ModbusMapRegs(object):
             end = start + (count * 2)
             self.data = self.data[:start] + data + self.data[end:]
         else:
-           raise ModbusMapError('Data write error')
+            raise ModbusMapError('Data write error')
 
     def append(self, offset, count, data, access=MBMAP_REGS_ACCESS_R):
         self.data += data
@@ -436,5 +436,3 @@ class ModbusMapRegs(object):
     def __str__(self):
         s = '  offset = %s count = %s access = %s' % (str(self.offset), str(self.count), str(self.access))
         return s
-
-

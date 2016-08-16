@@ -95,7 +95,7 @@ class ModbusClientRTU(object):
         self.devices = {}
 
         self.open()
-        
+
     def open(self):
 
         try:
@@ -152,7 +152,7 @@ class ModbusClientRTU(object):
 
         req = struct.pack('>BBHH', int(slave_id), op, int(addr), int(count))
         req += struct.pack('>H', computeCRC(req))
-        
+
         if trace_func:
             s = '%s:%s ->' % (self.name, str(slave_id))
             for c in req:
@@ -616,4 +616,3 @@ def checkCRC(data, check):
     :returns: True if matched, False otherwise
     '''
     return computeCRC(data) == check
-

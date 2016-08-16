@@ -126,7 +126,7 @@ def test_modbus_client_device_tcp_write(pathlist=None):
             raise Exception("Modbus request mismatch")
 
         d.close()
-        
+
     except Exception, e:
         print '*** Failure test_modbus_client_device_tcp_write: %s' % str(e)
         return False
@@ -162,4 +162,3 @@ if __name__ == "__main__":
 
     (count_run, count_passed, count_failed) = test_all()
     sys.exit(count_failed)
-
