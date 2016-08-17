@@ -315,7 +315,6 @@ class ModbusMap(object):
 
         offset = addr - int(self.base_addr)
         for regs in self.regs:
-            print('----  {}   {}   {}   {}'.format(addr, offset, self.base_addr, regs))
             if count_remaining > 0:
                 regs_end_offset = regs.offset + regs.count
                 if offset >= regs.offset and offset < regs_end_offset:

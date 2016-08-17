@@ -130,9 +130,6 @@ class Device(object):
                 addr += model.len + 2
 
         except Exception as e:
-            import traceback
-            import sys
-            traceback.print_exc(file=sys.stdout)
             raise SunSpecError('Error loading PICS: %s' % str(e))
 
     """
@@ -258,7 +255,6 @@ class Point(object):
         self.sf_point = sf_point
         self.impl = True
         self.value_base = value
-        # print(' ? {} {}'.format(self.point_type, self.value_base))
         self.value_sf = None
         self.dirty = False
 
@@ -305,10 +301,8 @@ class Point(object):
 
         if self.value_sf:
             self.value_base = int(old_div(round(float(v), abs(self.value_sf)), math.pow(10, self.value_sf)))
-            # print(' ? {} {}'.format(self.point_type, self.value_base))
         else:
             self.value_base = self.point_type.to_value(v)
-            # print(' ? {} {}'.format(self.point_type, self.value_base))
 
         self.dirty = True
 
@@ -332,7 +326,6 @@ class Point(object):
 
         if self.impl and value is not None:
             self.value_base = value
-            # print(' ? {} {}'.format(self.point_type, self.value_base))
 
     def to_pics(self, parent):
 
@@ -357,8 +350,9 @@ class Point(object):
 
         if (((self.value_base is not None or point.value_base is not None) and (self.value_base != point.value_base)) or
             ((self.value_sf is not None or point.value_sf is not None) and (self.value_sf != point.value_sf))):
-            if self.value_base is not None or point.value_base is not None:
-                print('self.value_base', type(self.value_base), self.value_base)
+            if self.value_base is not None:
+                print('self.value_base')
+            if point.value_base is not None:
                 print('point.value_base', type(point.value_base), point.value_base)
             return 'point %s not equal: %s %s - %s %s' % (self.point_type.id, self.value_base, self.value_sf, point.value_base, point.value_sf)
         return False
@@ -494,11 +488,9 @@ class Model(object):
                             block.from_pics(b)
                 else:
                     block_index = int(block_index)
-                    try:
-                        block = self.blocks[block_index]
-                    except IndexError:
+                    if len(self.blocks) < block_index:
                         raise SunSpecError('Block index out of range: %s' % (str(block_index)))
-                    block.from_pics(b)
+                    self.blocks[block_index].from_pics(b)
             else:
                 raise SunSpecError('Internal block type error')
 

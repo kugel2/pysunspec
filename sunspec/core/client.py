@@ -106,7 +106,6 @@ class ClientDevice(device.Device):
             model.read_points()
 
     def scan(self, progress=None, delay=None):
-        print('  ClientDevice.scan()')
 
         error = ''
 
@@ -119,10 +118,7 @@ class ClientDevice(device.Device):
                 time.sleep(delay)
 
         if self.base_addr is None:
-            print('if self.base_addr is None:')
-            print('__ : {}'.format(self.base_addr_list))
             for addr in self.base_addr_list:
-                print('__ : {}'.format(addr))
                 # print 'trying base address %s' % (addr)
                 try:
                     data = self.read(addr, 3)
@@ -141,8 +137,6 @@ class ClientDevice(device.Device):
                     time.sleep(delay)
 
         if self.base_addr is not None:
-            print('if self.base_addr is not None:')
-            print('__ : {}'.format(self.base_addr_list))
             # print 'base address = %s' % (self.base_addr)
             model_id = util.data_to_u16(data[4:6])
             addr = self.base_addr + 2
@@ -150,10 +144,7 @@ class ClientDevice(device.Device):
             while model_id != suns.SUNS_END_MODEL_ID:
                 # read model and model len separately due to some devices not supplying
                 # count for the end model id
-                print('__ : addr {}'.format(addr))
-                print('__ : model_id {}'.format(model_id))
                 data = self.read(addr + 1, 1)
-                print('check1')
                 if data and len(data) == 2:
                     if progress is not None:
                         cont = progress('Scanning model %s' % (model_id))
@@ -178,7 +169,6 @@ class ClientDevice(device.Device):
                     else:
                         break
                 else:
-                    print('check done')
                     break
 
                 if delay is not None:
@@ -221,9 +211,6 @@ class ClientModel(device.Model):
                         else:
                             read_len = self.addr + self.len - addr
                         data += self.device.read(addr, read_len)
-                # print(":".join("{:02x}".format(int(c)) for c in data))
-                print('b' + repr(data).lstrip('b'))
-                print('\n')
                 if data:
                     # print 'data len = ', len(data)
                     data_len = old_div(len(data),2)
@@ -239,7 +226,6 @@ class ClientModel(device.Model):
                                 byte_offset = offset * 2
                                 # print pname, point, offset, byte_offset, (byte_offset + (int(point.point_type.len) * 2)), point.point_type.len
                                 point.value_base = point.point_type.data_to(data[byte_offset:byte_offset + (int(point.point_type.len) * 2)])
-                                # print(' ? {} {}'.format(point.point_type, point.value_base))
                                 if not point.point_type.is_impl(point.value_base):
                                     point.value_base = None
                             else:
@@ -252,7 +238,6 @@ class ClientModel(device.Model):
                                 byte_offset = offset * 2
                                 # print pname, point, offset, byte_offset, (byte_offset + (int(point.point_type.len) * 2)), point.point_type.len
                                 point.value_base = point.point_type.data_to(data[byte_offset:byte_offset + (int(point.point_type.len) * 2)])
-                                # print(' ? {} {}'.format(point.point_type, point.value_base))
                                 if point.point_type.is_impl(point.value_base):
                                     if point.sf_point is not None:
                                         point.value_sf = point.sf_point.value_base

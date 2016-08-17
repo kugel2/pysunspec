@@ -61,7 +61,6 @@ def data_to_u64(data):
 
 def data_to_ipv6addr(data):
     addr = struct.unpack('16s', data)
-    print('lllasd : {}'.format(repr(data).lstrip('b')))
     return addr[0].decode()
 
 def data_to_eui48(data):
@@ -99,11 +98,9 @@ except Exception:
         return d[0]
 
 def data_to_str(data):
-    # print(' =====\ b' + repr(data).lstrip('b'))
     string = data.decode()
     if len(string) > 1:
         string = string[0] + string[1:].rstrip('\0')
-    # print(' =====/  ' + string)
     return string
 
 def s16_to_data(s16, len=None):
@@ -142,7 +139,6 @@ def float_to_data(f, len=None):
 def str_to_data(s, slen=None):
     if slen is None:
         slen = len(s)
-    print(type(s))
     return struct.pack(str(slen) + 's', s.encode())
 
 def eui48_to_data(eui48):
