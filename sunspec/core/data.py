@@ -20,7 +20,6 @@
     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
     IN THE SOFTWARE.
 """
-oldstr = str
 from builtins import str
 from builtins import object
 
@@ -208,7 +207,7 @@ class ModelData(object):
 
     def __init__(self, model_id=None, index=None, namespace=None):
 
-        self.model_id = str(model_id)
+        self.model_id = '{}'.format(model_id)
         self.namespace = namespace
         self.index = index
         self.point_data = []
@@ -236,7 +235,7 @@ class ModelData(object):
 
     def to_xml(self, parent):
 
-        attr = {SDX_MODEL_ID: oldstr(self.model_id)}
+        attr = {SDX_MODEL_ID: self.model_id}
 
         if self.index is not None and self.index > 1:
             attr[SDX_MODEL_INDEX] = self.index

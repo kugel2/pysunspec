@@ -21,7 +21,6 @@
     IN THE SOFTWARE.
 """
 from __future__ import division
-oldstr = str
 from builtins import str
 from builtins import object
 from past.utils import old_div
@@ -401,10 +400,10 @@ def model_class_get(model_id):
     def block_class_init(self, block, name):
         SunSpecClientBlockBase.__init__(self, block, name)
 
-    class_name = 'Model' + str(model_id)
+    class_name = 'Model{}'.format(model_id)
     class_ = globals().get(class_name)
     if class_ is None:
-        class_ = type(oldstr(class_name), (SunSpecClientModelBase,), {'__init__' : class_init})
+        class_ = type(class_name, (SunSpecClientModelBase,), {'__init__' : class_init})
         globals()[class_name] = class_
 
     setattr(class_, 'points', [])
@@ -423,7 +422,7 @@ def model_class_get(model_id):
         block_type = model_type.repeating_block
         if block_type is not None:
             block_class_name = class_name + 'Repeating'
-            block_class = type(oldstr(block_class_name), (SunSpecClientBlockBase,), {'__init__' : block_class_init})
+            block_class = type(block_class_name, (SunSpecClientBlockBase,), {'__init__' : block_class_init})
             globals()[block_class_name] = block_class
 
             setattr(block_class, 'points', [])
@@ -449,7 +448,7 @@ class SunSpecClientDevice(object):
 
             # create named attributes for each model
             for model in self.device.models_list:
-                model_id = str(model.id)
+                model_id = model.id
                 c = model_class_get(model_id)
                 if model.model_type is not None:
                     name = model.model_type.name

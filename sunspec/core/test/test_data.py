@@ -21,7 +21,6 @@
     IN THE SOFTWARE.
 """
 from __future__ import print_function
-oldstr = str
 from builtins import str
 
 import sys
