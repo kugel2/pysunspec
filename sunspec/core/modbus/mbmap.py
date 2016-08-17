@@ -25,7 +25,6 @@ from __future__ import print_function
 from builtins import str
 from builtins import range
 from builtins import object
-from past.utils import old_div
 
 import struct
 
@@ -98,7 +97,7 @@ class ModbusMap(object):
             for line in f:
                 if line[0] != '#':
                     data_list = line.rstrip('\r\n').split()
-                    data_len = old_div(len(data_list),2)
+                    data_len = len(data_list)//2
                     if data_len > 0:
                         # print offset, data_list
                         for b in data_list:
@@ -108,7 +107,7 @@ class ModbusMap(object):
                             else:
                                 data += c
 
-            mmr = ModbusMapRegs(offset, old_div(len(data),2), data, MBMAP_REGS_ACCESS_RW)
+            mmr = ModbusMapRegs(offset, len(data)//2, data, MBMAP_REGS_ACCESS_RW)
             self.regs.append(mmr)
             f.close()
         except Exception as e:
@@ -205,7 +204,7 @@ class ModbusMap(object):
                     rlen = 4
                 elif rtype == MBMAP_REGS_TYPE_STRING:
                     if rlen == 0:
-                        rlen = old_div((len(text) + 3),4)
+                        rlen = (len(text) + 3)//4
                     data = struct.pack(str(rlen * 2) + 's', text.encode())
                 elif rtype == MBMAP_REGS_TYPE_HEX_STRING:
                     if text:
@@ -215,7 +214,7 @@ class ModbusMap(object):
                     if text_len % 4 != 0:
                         raise ModbusMapError('Hex string content length must be a multiple of 4 bytes')
                     if rlen == 0:
-                        rlen = old_div(text_len,4)
+                        rlen = text_len//4
                     text_index = 0
                     while text_index < text_len:
                         c = struct.pack('B', int(text[text_index:text_index + 2], 16))
@@ -339,7 +338,7 @@ class ModbusMap(object):
     def write(self, addr, data):
 
         data_len = len(data)
-        count_remaining = old_div(data_len,2)
+        count_remaining = data_len//2
 
         if data_len % 2 != 0:
             raise ModbusMapError('Data length not even number of bytes - addr: %d  data len: %d' % (addr, data_len))
@@ -413,7 +412,7 @@ class ModbusMapRegs(object):
             raise ModbusMapError('Data read error')
 
     def write(self, offset, data):
-        count = old_div(len(data),2)
+        count = len(data)//2
         if (offset >= self.offset) and (offset + count <= self.offset + self.count):
             start = (offset - self.offset) * 2
             end = start + (count * 2)
@@ -434,7 +433,7 @@ class ModbusMapRegs(object):
         if self.data != regs.data:
             for i in range(len(self.data)):
                 if self.data[i] != regs.data[i]:
-                    return ('Data mismatch at offset %d' % (self.offset + (old_div(i,2))))
+                    return ('Data mismatch at offset %d' % (self.offset + (i//2)))
         if self.access != regs.access:
             return ('Access mismatch for offset %d' % (self.offset))
         return False

@@ -24,7 +24,6 @@ from __future__ import division
 from builtins import str
 from builtins import range
 from builtins import object
-from past.utils import old_div
 
 import os
 import socket
@@ -231,7 +230,7 @@ class ModbusClientRTU(object):
         except_code = None
         func = FUNC_WRITE_MULTIPLE
         len_data = len(data)
-        count = old_div(len_data,2)
+        count = len_data//2
 
         req = struct.pack('>BBHHB', int(slave_id), func, int(addr), count, len_data)
         req = bytearray(req)
@@ -286,7 +285,7 @@ class ModbusClientRTU(object):
     def write(self, slave_id, addr, data, trace_func=None, max_count=REQ_COUNT_MAX):
         write_count = 0
         write_offset = 0
-        count = old_div(len(data),2)
+        count = len(data)//2
 
         if self.serial is not None:
             while (count > 0):
@@ -479,7 +478,7 @@ class ModbusClientDeviceTCP(object):
         func = FUNC_WRITE_MULTIPLE
 
         write_len = len(data)
-        write_count = old_div(write_len,2)
+        write_count = write_len//2
         req = struct.pack('>HHHBBHHB', 0, 0, TCP_WRITE_MULT_REQ_LEN + write_len, int(self.slave_id), func, int(addr), write_count, write_len)
         req += data
 
@@ -527,7 +526,7 @@ class ModbusClientDeviceTCP(object):
         write_count = 0
         write_offset = 0
         local_connect = False
-        count = old_div(len(data),2)
+        count = len(data)//2
 
         if self.socket is None:
             local_connect = True

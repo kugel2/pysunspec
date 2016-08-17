@@ -23,7 +23,6 @@
 from __future__ import division
 from builtins import str
 from builtins import object
-from past.utils import old_div
 
 import os
 import time
@@ -212,7 +211,7 @@ class ClientModel(device.Model):
                         data += self.device.read(addr, read_len)
                 if data:
                     # print 'data len = ', len(data)
-                    data_len = old_div(len(data),2)
+                    data_len = len(data)//2
                     if data_len != self.len:
                         raise SunSpecClientError('Error reading model %s' % self.model_type)
 
