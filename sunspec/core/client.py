@@ -453,7 +453,7 @@ class SunSpecClientDevice(object):
                 if model.model_type is not None:
                     name = model.model_type.name
                 else:
-                    name = 'model_' + model_id
+                    name = 'model_' + str(model_id)
                 model_class = c(model, name)
                 existing = getattr(self, name, None)
                 # if model id already defined
