@@ -8,7 +8,7 @@
 from setuptools import setup, find_packages
 
 setup(name = 'pysunspec',
-      version = '1.0.7',
+      version = '1.1.0.dev1',
       description = 'Python SunSpec Tools',
       author = ['Bob Fox'],
       author_email = ['bob.fox@loggerware.com'],
