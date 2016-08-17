@@ -21,6 +21,7 @@
     IN THE SOFTWARE.
 """
 from builtins import object
+from builtins import bytes
 
 EIGHTBITS = 8
 PARITY_NONE = 'N'
@@ -44,8 +45,8 @@ class Serial(object):
         self.dsrdtr = dsrdtr
         self.interCharTimeout = interCharTimeout
         self.is_open = False
-        self.in_buf = bytearray()
-        self.out_buf = bytearray()
+        self.in_buf = bytes()
+        self.out_buf = bytes()
 
         self.open()
 

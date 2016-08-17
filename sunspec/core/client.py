@@ -23,6 +23,7 @@
 from __future__ import division
 from builtins import str
 from builtins import object
+from builtins import bytes
 
 import os
 import time
@@ -121,7 +122,7 @@ class ClientDevice(device.Device):
                 try:
                     data = self.read(addr, 3)
 
-                    if data[:4] == bytearray(b'SunS'):
+                    if data[:4] == bytes(b'SunS'):
                         self.base_addr = addr
                         # print 'device base address = %d' % self.base_addr
                         break
@@ -199,7 +200,7 @@ class ClientModel(device.Model):
                 if end_index == 1:
                     data = self.device.read(self.addr, self.len)
                 else:
-                    data = bytearray()
+                    data = bytes()
                     index = 0
                     while index < end_index:
                         addr = self.read_blocks[index]
@@ -256,7 +257,7 @@ class ClientModel(device.Model):
 
         addr = None
         next_addr = None
-        data = bytearray()
+        data = bytes()
 
         for block in self.blocks:
             for point in block.points_list:
@@ -266,12 +267,12 @@ class ClientModel(device.Model):
                     point_data = point.point_type.to_data(point.value_base, (point_len * 2))
                     if addr is None:
                         addr = point_addr
-                        data = bytearray()
+                        data = bytes()
                     else:
                         if point_addr != next_addr:
                             block.model.device.write(addr, data)
                             addr = point_addr
-                            data = bytearray()
+                            data = bytes()
                     next_addr = point_addr + point_len
                     data += point_data
                     point.dirty = False

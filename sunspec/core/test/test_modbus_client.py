@@ -22,6 +22,7 @@
 """
 from __future__ import print_function
 from builtins import str
+from builtins import bytes
 
 import sys
 import os
@@ -42,15 +43,15 @@ def test_modbus_client_device_rtu_read(pathlist=None, raw_traceback=False):
     try:
         d = modbus.ModbusClientDeviceRTU(1, modbus.TEST_NAME, trace_func=None)
 
-        d.client.serial.in_buf = bytearray(b'\x01\x03\x04\x53\x75\x6E\x53\x96\xF0')
-        d.client.serial.out_buf = bytearray()
+        d.client.serial.in_buf = bytes(b'\x01\x03\x04\x53\x75\x6E\x53\x96\xF0')
+        d.client.serial.out_buf = bytes()
 
         data = d.read(40000, 2)
 
-        if d.client.serial.out_buf != bytearray(b'\x01\x03\x9C\x40\x00\x02\xEB\x8F'):
+        if d.client.serial.out_buf != bytes(b'\x01\x03\x9C\x40\x00\x02\xEB\x8F'):
             raise Exception("Modbus request mismatch")
 
-        if data != bytearray(b'SunS'):
+        if data != bytes(b'SunS'):
             raise Exception("Read data mismatch - expected: 'SunS' received: %s") % (data)
 
         d.close()
@@ -71,12 +72,12 @@ def test_modbus_client_device_rtu_write(pathlist=None, raw_traceback=False):
     try:
         d = modbus.ModbusClientDeviceRTU(1, modbus.TEST_NAME, trace_func=None)
 
-        d.client.serial.in_buf = bytearray(b'\x01\x10\x9C\x40\x00\x02\x6E\x4C')
-        d.client.serial.out_buf = bytearray()
+        d.client.serial.in_buf = bytes(b'\x01\x10\x9C\x40\x00\x02\x6E\x4C')
+        d.client.serial.out_buf = bytes()
 
-        d.write(40000, bytearray(b'ABCD'))
+        d.write(40000, bytes(b'ABCD'))
 
-        if d.client.serial.out_buf != bytearray(b'\x01\x10\x9C\x40\x00\x02\x04\x41\x42\x43\x44\x8B\xB2'):
+        if d.client.serial.out_buf != bytes(b'\x01\x10\x9C\x40\x00\x02\x04\x41\x42\x43\x44\x8B\xB2'):
             raise Exception("Modbus request mismatch")
 
         d.close()
@@ -97,15 +98,15 @@ def test_modbus_client_device_tcp_read(pathlist=None, raw_traceback=False):
     try:
         d = modbus.ModbusClientDeviceTCP(1, ipaddr="127.0.0.1", trace_func=None, test=True)
 
-        d.socket.in_buf = bytearray(b'\x00\x00\x00\x00\x00\x07\x01\x03\x04\x53\x75\x6E\x53')
-        d.socket.out_buf = bytearray()
+        d.socket.in_buf = bytes(b'\x00\x00\x00\x00\x00\x07\x01\x03\x04\x53\x75\x6E\x53')
+        d.socket.out_buf = bytes()
 
         data = d.read(40000, 2)
 
-        if d.socket.out_buf != bytearray(b'\x00\x00\x00\x00\x00\x06\x01\x03\x9C\x40\x00\x02'):
+        if d.socket.out_buf != bytes(b'\x00\x00\x00\x00\x00\x06\x01\x03\x9C\x40\x00\x02'):
             raise Exception("Modbus request mismatch")
 
-        if data != bytearray(b'SunS'):
+        if data != bytes(b'SunS'):
             raise Exception("Read data mismatch - expected: 'SunS' received: %s") % (data)
 
         d.close()
@@ -126,12 +127,12 @@ def test_modbus_client_device_tcp_write(pathlist=None, raw_traceback=False):
     try:
         d = modbus.ModbusClientDeviceTCP(1, ipaddr="127.0.0.1", trace_func=None, test=True)
 
-        d.socket.in_buf = bytearray(b'\x00\x00\x00\x00\x00\x06\x01\x10\x9C\x40\x00\x02')
-        d.socket.out_buf = bytearray()
+        d.socket.in_buf = bytes(b'\x00\x00\x00\x00\x00\x06\x01\x10\x9C\x40\x00\x02')
+        d.socket.out_buf = bytes()
 
-        d.write(40000, bytearray(b'ABCD'))
+        d.write(40000, bytes(b'ABCD'))
 
-        if d.socket.out_buf != bytearray(b'\x00\x00\x00\x00\x00\x0B\x01\x10\x9C\x40\x00\x02\x04\x41\x42\x43\x44'):
+        if d.socket.out_buf != bytes(b'\x00\x00\x00\x00\x00\x0B\x01\x10\x9C\x40\x00\x02\x04\x41\x42\x43\x44'):
             raise Exception("Modbus request mismatch")
 
         d.close()

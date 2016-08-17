@@ -25,6 +25,7 @@ from __future__ import print_function
 from builtins import str
 from builtins import range
 from builtins import object
+from builtins import bytes
 
 import struct
 
@@ -306,7 +307,7 @@ class ModbusMap(object):
 
     def read(self, addr, count, op=None):
 
-        data = bytearray()
+        data = bytes()
         count_remaining = count
 
         if op and op != self.func:

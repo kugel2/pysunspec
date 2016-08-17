@@ -24,6 +24,7 @@ from __future__ import division
 from builtins import str
 from builtins import range
 from builtins import object
+from builtins import bytes
 
 import os
 import socket
@@ -149,13 +150,13 @@ class ModbusClientRTU(object):
             modbus_rtu_client_remove(self.name)
 
     def _read(self, slave_id, addr, count, op=FUNC_READ_HOLDING, trace_func=None):
-        resp = bytearray()
+        resp = bytes()
         len_remaining = 5
         len_found = False
         except_code = None
 
         req = struct.pack('>BBHH', int(slave_id), op, int(addr), int(count))
-        req = bytearray(req)
+        req = bytes(req)
         req += struct.pack('>H', computeCRC(req))
 
         if trace_func:
@@ -201,7 +202,7 @@ class ModbusClientRTU(object):
         return resp[3:-2]
 
     def read(self, slave_id, addr, count, op=FUNC_READ_HOLDING, trace_func=None, max_count=REQ_COUNT_MAX):
-        resp = bytearray()
+        resp = bytes()
         read_count = 0
         read_offset = 0
 
@@ -224,7 +225,7 @@ class ModbusClientRTU(object):
         return resp
 
     def _write(self, slave_id, addr, data, trace_func=None):
-        resp = bytearray()
+        resp = bytes()
         len_remaining = 5
         len_found = False
         except_code = None
@@ -233,7 +234,7 @@ class ModbusClientRTU(object):
         count = len_data//2
 
         req = struct.pack('>BBHHB', int(slave_id), func, int(addr), count, len_data)
-        req = bytearray(req)
+        req = bytes(req)
         req += data
         req += struct.pack('>H', computeCRC(req))
 
@@ -391,7 +392,7 @@ class ModbusClientDeviceTCP(object):
 
     def _read(self, addr, count, op=FUNC_READ_HOLDING):
 
-        resp = bytearray()
+        resp = bytes()
         len_remaining = TCP_HDR_LEN + TCP_RESP_MIN_LEN
         len_found = False
         except_code = None
@@ -441,7 +442,7 @@ class ModbusClientDeviceTCP(object):
 
     def read(self, addr, count, op=FUNC_READ_HOLDING):
 
-        resp = bytearray()
+        resp = bytes()
         read_count = 0
         read_offset = 0
         local_connect = False
@@ -471,7 +472,7 @@ class ModbusClientDeviceTCP(object):
 
     def _write(self, addr, data):
 
-        resp = bytearray()
+        resp = bytes()
         len_remaining = TCP_HDR_LEN + TCP_RESP_MIN_LEN
         len_found = False
         except_code = None
