@@ -5,14 +5,15 @@
   All Rights Reserved
 
 """
-from setuptools import setup
+from setuptools import setup, find_packages
 
 setup(name = 'pysunspec',
       version = '1.0.7',
       description = 'Python SunSpec Tools',
       author = ['Bob Fox'],
       author_email = ['bob.fox@loggerware.com'],
-      packages = ['sunspec', 'sunspec.core', 'sunspec.core.modbus', 'sunspec.core.test', 'sunspec.core.test.fake'],
+      packages = find_packages(),
       package_data = {'sunspec': ['models/smdx/*'], 'sunspec.core.test': ['devices/*']},
-      scripts = ['scripts/suns.py', 'scripts/pysunspec_test.py']
+      scripts = ['scripts/suns.py', 'scripts/pysunspec_test.py'],
+      install_requires = ['pyserial', 'future']
       )
