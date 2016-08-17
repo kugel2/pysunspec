@@ -44,8 +44,8 @@ class Serial(object):
         self.dsrdtr = dsrdtr
         self.interCharTimeout = interCharTimeout
         self.is_open = False
-        self.in_buf = ''
-        self.out_buf = ''
+        self.in_buf = bytearray()
+        self.out_buf = bytearray()
 
         self.open()
 

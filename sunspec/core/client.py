@@ -21,6 +21,7 @@
     IN THE SOFTWARE.
 """
 from __future__ import division
+oldstr = str
 from builtins import str
 from builtins import object
 from past.utils import old_div
@@ -105,6 +106,7 @@ class ClientDevice(device.Device):
             model.read_points()
 
     def scan(self, progress=None, delay=None):
+        print('  ClientDevice.scan()')
 
         error = ''
 
@@ -117,12 +119,15 @@ class ClientDevice(device.Device):
                 time.sleep(delay)
 
         if self.base_addr is None:
+            print('if self.base_addr is None:')
+            print('__ : {}'.format(self.base_addr_list))
             for addr in self.base_addr_list:
+                print('__ : {}'.format(addr))
                 # print 'trying base address %s' % (addr)
                 try:
                     data = self.read(addr, 3)
 
-                    if data[:4] == 'SunS':
+                    if data[:4] == bytearray(b'SunS'):
                         self.base_addr = addr
                         # print 'device base address = %d' % self.base_addr
                         break
@@ -136,6 +141,8 @@ class ClientDevice(device.Device):
                     time.sleep(delay)
 
         if self.base_addr is not None:
+            print('if self.base_addr is not None:')
+            print('__ : {}'.format(self.base_addr_list))
             # print 'base address = %s' % (self.base_addr)
             model_id = util.data_to_u16(data[4:6])
             addr = self.base_addr + 2
@@ -143,7 +150,10 @@ class ClientDevice(device.Device):
             while model_id != suns.SUNS_END_MODEL_ID:
                 # read model and model len separately due to some devices not supplying
                 # count for the end model id
+                print('__ : addr {}'.format(addr))
+                print('__ : model_id {}'.format(model_id))
                 data = self.read(addr + 1, 1)
+                print('check1')
                 if data and len(data) == 2:
                     if progress is not None:
                         cont = progress('Scanning model %s' % (model_id))
@@ -168,6 +178,7 @@ class ClientDevice(device.Device):
                     else:
                         break
                 else:
+                    print('check done')
                     break
 
                 if delay is not None:
@@ -200,7 +211,7 @@ class ClientModel(device.Model):
                 if end_index == 1:
                     data = self.device.read(self.addr, self.len)
                 else:
-                    data = ''
+                    data = bytearray()
                     index = 0
                     while index < end_index:
                         addr = self.read_blocks[index]
@@ -210,6 +221,9 @@ class ClientModel(device.Model):
                         else:
                             read_len = self.addr + self.len - addr
                         data += self.device.read(addr, read_len)
+                # print(":".join("{:02x}".format(int(c)) for c in data))
+                print('b' + repr(data).lstrip('b'))
+                print('\n')
                 if data:
                     # print 'data len = ', len(data)
                     data_len = old_div(len(data),2)
@@ -225,6 +239,7 @@ class ClientModel(device.Model):
                                 byte_offset = offset * 2
                                 # print pname, point, offset, byte_offset, (byte_offset + (int(point.point_type.len) * 2)), point.point_type.len
                                 point.value_base = point.point_type.data_to(data[byte_offset:byte_offset + (int(point.point_type.len) * 2)])
+                                # print(' ? {} {}'.format(point.point_type, point.value_base))
                                 if not point.point_type.is_impl(point.value_base):
                                     point.value_base = None
                             else:
@@ -237,6 +252,7 @@ class ClientModel(device.Model):
                                 byte_offset = offset * 2
                                 # print pname, point, offset, byte_offset, (byte_offset + (int(point.point_type.len) * 2)), point.point_type.len
                                 point.value_base = point.point_type.data_to(data[byte_offset:byte_offset + (int(point.point_type.len) * 2)])
+                                # print(' ? {} {}'.format(point.point_type, point.value_base))
                                 if point.point_type.is_impl(point.value_base):
                                     if point.sf_point is not None:
                                         point.value_sf = point.sf_point.value_base
@@ -257,7 +273,7 @@ class ClientModel(device.Model):
 
         addr = None
         next_addr = None
-        data = ''
+        data = bytearray()
 
         for block in self.blocks:
             for point in block.points_list:
@@ -267,12 +283,12 @@ class ClientModel(device.Model):
                     point_data = point.point_type.to_data(point.value_base, (point_len * 2))
                     if addr is None:
                         addr = point_addr
-                        data = ''
+                        data = bytearray()
                     else:
                         if point_addr != next_addr:
                             block.model.device.write(addr, data)
                             addr = point_addr
-                            data = ''
+                            data = bytearray()
                     next_addr = point_addr + point_len
                     data += point_data
                     point.dirty = False
@@ -403,7 +419,7 @@ def model_class_get(model_id):
     class_name = 'Model' + str(model_id)
     class_ = globals().get(class_name)
     if class_ is None:
-        class_ = type(class_name, (SunSpecClientModelBase,), {'__init__' : class_init})
+        class_ = type(oldstr(class_name), (SunSpecClientModelBase,), {'__init__' : class_init})
         globals()[class_name] = class_
 
     setattr(class_, 'points', [])
@@ -422,7 +438,7 @@ def model_class_get(model_id):
         block_type = model_type.repeating_block
         if block_type is not None:
             block_class_name = class_name + 'Repeating'
-            block_class = type(block_class_name, (SunSpecClientBlockBase,), {'__init__' : block_class_init})
+            block_class = type(oldstr(block_class_name), (SunSpecClientBlockBase,), {'__init__' : block_class_init})
             globals()[block_class_name] = block_class
 
             setattr(block_class, 'points', [])

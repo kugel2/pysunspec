@@ -20,6 +20,7 @@
     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
     IN THE SOFTWARE.
 """
+oldstr = str
 from builtins import str
 from builtins import object
 
@@ -235,9 +236,9 @@ class ModelData(object):
 
     def to_xml(self, parent):
 
-        attr = {SDX_MODEL_ID: str(self.model_id)}
+        attr = {SDX_MODEL_ID: oldstr(self.model_id)}
 
-        if self.index > 1:
+        if self.index is not None and self.index > 1:
             attr[SDX_MODEL_INDEX] = self.index
         if self.namespace:
             attr[SDX_MODEL_NAMESPACE] = self.namespace
@@ -277,7 +278,7 @@ class PointData(object):
 
     def to_xml(self, parent):
 
-        attr = {SDX_POINT_ID: str(self.point_id)}
+        attr = {SDX_POINT_ID: self.point_id}
 
         if self.index:
             attr[SDX_POINT_INDEX] = str(self.index)

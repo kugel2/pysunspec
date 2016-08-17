@@ -21,6 +21,7 @@
     IN THE SOFTWARE.
 """
 from __future__ import print_function
+oldstr = str
 from builtins import str
 
 import sys
@@ -33,7 +34,7 @@ import sunspec.core.util as util
 
 def test_data(pathlist=None, raw_traceback=False):
     t = 1387560564.48
-    expected_xml = '<sunSpecData><d lid="00:00:00:00:00:01" man="Man" mod="Mod" sn="SN" t="2013-12-20T17:29:24Z"><m id="1"><p id="P1">23</p><p id="P2">24</p></m></d></sunSpecData>'
+    expected_xml = bytearray(b'<sunSpecData><d lid="00:00:00:00:00:01" man="Man" mod="Mod" sn="SN" t="2013-12-20T17:29:24Z"><m id="1"><p id="P1">23</p><p id="P2">24</p></m></d></sunSpecData>')
 
     try:
         sd = data.SunSpecData()

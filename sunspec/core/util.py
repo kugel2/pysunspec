@@ -20,6 +20,7 @@
     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
     IN THE SOFTWARE.
 """
+oldstr = str
 from builtins import str
 from builtins import object
 
@@ -60,7 +61,8 @@ def data_to_u64(data):
 
 def data_to_ipv6addr(data):
     addr = struct.unpack('16s', data)
-    return addr[0]
+    print('lllasd : {}'.format(repr(data).lstrip('b')))
+    return addr[0].decode()
 
 def data_to_eui48(data):
     return '%02X:%02X:%02X:%02X:%02X:%02X' % (ord(data[2]), ord(data[3]), ord(data[4]), ord(data[5]), ord(data[6]), ord(data[7]))
@@ -97,9 +99,12 @@ except Exception:
         return d[0]
 
 def data_to_str(data):
-    if len(data) > 1:
-        data = data[0] + data[1:].rstrip('\0')
-    return data
+    # print(' =====\ b' + repr(data).lstrip('b'))
+    string = data.decode()
+    if len(string) > 1:
+        string = string[0] + string[1:].rstrip('\0')
+    # print(' =====/  ' + string)
+    return string
 
 def s16_to_data(s16, len=None):
     return struct.pack('>h', s16)
@@ -137,7 +142,8 @@ def float_to_data(f, len=None):
 def str_to_data(s, slen=None):
     if slen is None:
         slen = len(s)
-    return struct.pack(str(slen) + 's', s)
+    print(type(s))
+    return struct.pack(str(slen) + 's', s.encode())
 
 def eui48_to_data(eui48):
     return ('0000' + eui48.replace(':', '')).decode('hex')

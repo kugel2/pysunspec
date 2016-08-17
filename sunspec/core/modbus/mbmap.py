@@ -206,7 +206,7 @@ class ModbusMap(object):
                 elif rtype == MBMAP_REGS_TYPE_STRING:
                     if rlen == 0:
                         rlen = old_div((len(text) + 3),4)
-                    data = struct.pack(str(rlen * 2) + 's', str(text))
+                    data = struct.pack(str(rlen * 2) + 's', text.encode())
                 elif rtype == MBMAP_REGS_TYPE_HEX_STRING:
                     if text:
                         # remove any spaces
@@ -307,7 +307,7 @@ class ModbusMap(object):
 
     def read(self, addr, count, op=None):
 
-        data = ''
+        data = bytearray()
         count_remaining = count
 
         if op and op != self.func:
@@ -315,6 +315,7 @@ class ModbusMap(object):
 
         offset = addr - int(self.base_addr)
         for regs in self.regs:
+            print('----  {}   {}   {}   {}'.format(addr, offset, self.base_addr, regs))
             if count_remaining > 0:
                 regs_end_offset = regs.offset + regs.count
                 if offset >= regs.offset and offset < regs_end_offset:
