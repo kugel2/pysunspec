@@ -46,7 +46,7 @@ class SunSpecClientError(SunSpecError):
 class ClientDevice(device.Device):
 
     def __init__(self, device_type, slave_id=None, name=None, pathlist = None, baudrate=None, parity=None, ipaddr=None, ipport=None,
-                 timeout=None, trace=False):
+                 timeout=None, trace=False, max_count=None):
 
         device.Device.__init__(self, addr=None)
 
@@ -60,7 +60,7 @@ class ClientDevice(device.Device):
 
         try:
             if device_type == RTU:
-                self.modbus_device = modbus.ModbusClientDeviceRTU(slave_id, name, baudrate, parity, timeout, self, trace)
+                self.modbus_device = modbus.ModbusClientDeviceRTU(slave_id, name, baudrate, parity, timeout, self, trace, max_count=max_count)
             elif device_type == TCP:
                 self.modbus_device = modbus.ModbusClientDeviceTCP(slave_id, ipaddr, ipport, timeout, self, trace)
             elif device_type == MAPPED:
@@ -436,10 +436,10 @@ def model_class_get(model_id):
 class SunSpecClientDevice(object):
 
     def __init__(self, device_type, slave_id=None, name=None, pathlist = None, baudrate=None, parity=None, ipaddr=None, ipport=None,
-                 timeout=None, trace=False, scan_progress=None, scan_delay=None):
+                 timeout=None, trace=False, scan_progress=None, scan_delay=None, max_count=None):
 
         # super(self.__class__, self).__init__(device_type, slave_id, name, pathlist, baudrate, parity, ipaddr, ipport)
-        self.device = ClientDevice(device_type, slave_id, name, pathlist, baudrate, parity, ipaddr, ipport, timeout, trace)
+        self.device = ClientDevice(device_type, slave_id, name, pathlist, baudrate, parity, ipaddr, ipport, timeout, trace, max_count=max_count)
         self.models = []
 
         try:

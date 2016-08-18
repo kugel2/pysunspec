@@ -302,7 +302,10 @@ class ModbusClientRTU(object):
 
 class ModbusClientDeviceRTU(object):
 
-    def __init__(self, slave_id, name, baudrate=None, parity=None, timeout=None, ctx=None, trace_func=None, max_count=REQ_COUNT_MAX):
+    def __init__(self, slave_id, name, baudrate=None, parity=None, timeout=None, ctx=None, trace_func=None, max_count=None):
+        if max_count is None:
+            max_count = REQ_COUNT_MAX
+
         self.slave_id = slave_id
         self.name = name
         self.client = None
