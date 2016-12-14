@@ -62,7 +62,7 @@ class ClientDevice(device.Device):
             if device_type == RTU:
                 self.modbus_device = modbus.ModbusClientDeviceRTU(slave_id, name, baudrate, parity, timeout, self, trace, max_count=max_count)
             elif device_type == TCP:
-                self.modbus_device = modbus.ModbusClientDeviceTCP(slave_id, ipaddr, ipport, timeout, self, trace)
+                self.modbus_device = modbus.ModbusClientDeviceTCP(slave_id, ipaddr, ipport, timeout, self, trace, max_count=max_count)
             elif device_type == MAPPED:
                 if name is not None:
                     self.modbus_device = modbus.ModbusClientDeviceMapped(slave_id, name, pathlist, self)
