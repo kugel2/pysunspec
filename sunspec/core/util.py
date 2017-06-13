@@ -223,16 +223,16 @@ class PathList(object):
                 file_path += sep
             file_path  += filename
             if zip_file_path:
-                zip_file = zipfile.ZipFile(zip_file_path)
-                try:
-                    zip_file.getinfo(file_path)
-                except Exception as e:
-                    continue
-                return zip_file.read(file_path)
+                with zipfile.ZipFile(zip_file_path) as zip_file:
+                    try:
+                        zip_file.getinfo(file_path)
+                    except Exception as e:
+                        continue
+                    return zip_file.read(file_path)
             else:
                 if os.path.exists(file_path):
-                    f = open(file_path, 'rb')
-                    return f.read()
+                    with open(file_path, 'rb') as f:
+                        return f.read()
                 else:
                     continue
 
