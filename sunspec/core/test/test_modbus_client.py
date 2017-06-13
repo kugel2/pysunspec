@@ -1,6 +1,6 @@
 
 """
-    Copyright (C) 2016 SunSpec Alliance
+    Copyright (C) 2017 SunSpec Alliance
 
     Permission is hereby granted, free of charge, to any person obtaining a
     copy of this software and associated documentation files (the "Software"),
@@ -26,21 +26,19 @@ from builtins import bytes
 
 import sys
 import os
-import traceback
+import unittest
 
 import sunspec.core.device as device
 import sunspec.core.modbus.client as modbus
 
-def test_trace_func(s):
-    print(s)
 
-def test_modbus_client_device_rtu_read(pathlist=None, raw_traceback=False):
-    """
-    -> 01 03 9C 40 00 02 EB 8F
-    <- 01 03 04 53 75 6E 53 96 F0
-    """
+class TestModbusClient(unittest.TestCase):
+    def test_modbus_client_device_rtu_read(self):
+        """
+        -> 01 03 9C 40 00 02 EB 8F
+        <- 01 03 04 53 75 6E 53 96 F0
+        """
 
-    try:
         d = modbus.ModbusClientDeviceRTU(1, modbus.TEST_NAME, trace_func=None)
 
         d.client.serial.in_buf = bytes(b'\x01\x03\x04\x53\x75\x6E\x53\x96\xF0')
@@ -56,20 +54,13 @@ def test_modbus_client_device_rtu_read(pathlist=None, raw_traceback=False):
 
         d.close()
 
-    except Exception as e:
-        if raw_traceback:
-            traceback.print_exc(file=sys.stdout)
-        print('*** Failure test_modbus_client_device_rtu_read: %s' % str(e))
-        return False
-    return True
 
-def test_modbus_client_device_rtu_write(pathlist=None, raw_traceback=False):
-    """
-    -> 01 10 9C 40 00 02 04 41 42 43 44 8B B2
-    <- 01 10 9C 40 00 02 6E 4C
-    """
+    def test_modbus_client_device_rtu_write(self):
+        """
+        -> 01 10 9C 40 00 02 04 41 42 43 44 8B B2
+        <- 01 10 9C 40 00 02 6E 4C
+        """
 
-    try:
         d = modbus.ModbusClientDeviceRTU(1, modbus.TEST_NAME, trace_func=None)
 
         d.client.serial.in_buf = bytes(b'\x01\x10\x9C\x40\x00\x02\x6E\x4C')
@@ -82,20 +73,13 @@ def test_modbus_client_device_rtu_write(pathlist=None, raw_traceback=False):
 
         d.close()
 
-    except Exception as e:
-        if raw_traceback:
-            traceback.print_exc(file=sys.stdout)
-        print('*** test_modbus_client_device_rtu_write: %s' % str(e))
-        return False
-    return True
 
-def test_modbus_client_device_tcp_read(pathlist=None, raw_traceback=False):
-    """
-    -> 00 00 00 00 00 06 01 03 9C 40 00 02
-    <- 00 00 00 00 00 07 01 03 04 53 75 6E 53
-    """
+    def test_modbus_client_device_tcp_read(self):
+        """
+        -> 00 00 00 00 00 06 01 03 9C 40 00 02
+        <- 00 00 00 00 00 07 01 03 04 53 75 6E 53
+        """
 
-    try:
         d = modbus.ModbusClientDeviceTCP(1, ipaddr="127.0.0.1", trace_func=None, test=True)
 
         d.socket.in_buf = bytes(b'\x00\x00\x00\x00\x00\x07\x01\x03\x04\x53\x75\x6E\x53')
@@ -111,20 +95,13 @@ def test_modbus_client_device_tcp_read(pathlist=None, raw_traceback=False):
 
         d.close()
 
-    except Exception as e:
-        if raw_traceback:
-            traceback.print_exc(file=sys.stdout)
-        print('*** Failure test_modbus_client_device_tcp_read: %s' % str(e))
-        return False
-    return True
 
-def test_modbus_client_device_tcp_write(pathlist=None, raw_traceback=False):
-    """
-    -> 00 00 00 00 00 0B 01 10 9C 40 00 02 04 41 42 43 44
-    <- 00 00 00 00 00 06 01 10 9C 40 00 02
-    """
+    def test_modbus_client_device_tcp_write(self):
+        """
+        -> 00 00 00 00 00 0B 01 10 9C 40 00 02 04 41 42 43 44
+        <- 00 00 00 00 00 06 01 10 9C 40 00 02
+        """
 
-    try:
         d = modbus.ModbusClientDeviceTCP(1, ipaddr="127.0.0.1", trace_func=None, test=True)
 
         d.socket.in_buf = bytes(b'\x00\x00\x00\x00\x00\x06\x01\x10\x9C\x40\x00\x02')
@@ -137,40 +114,7 @@ def test_modbus_client_device_tcp_write(pathlist=None, raw_traceback=False):
 
         d.close()
 
-    except Exception as e:
-        if raw_traceback:
-            traceback.print_exc(file=sys.stdout)
-        print('*** Failure test_modbus_client_device_tcp_write: %s' % str(e))
-        return False
-    return True
-
-tests = [
-    test_modbus_client_device_rtu_read,
-    test_modbus_client_device_rtu_write,
-    test_modbus_client_device_tcp_read,
-    test_modbus_client_device_tcp_write
-]
-
-def test_all(pathlist=None, stop_on_failure=True, raw_traceback=False):
-
-    count_passed = 0
-    count_failed = 0
-    count_run = 0
-
-    for test in tests:
-        count_run += 1
-        if test(pathlist, raw_traceback=raw_traceback) is True:
-            count_passed += 1
-        else:
-            count_failed += 1
-            if stop_on_failure is True:
-                break
-
-    print('Test modbus client module: total tests: %d  tests run: %d  tests passed: %d  tests failed: %d' %  (len(tests), count_run, count_passed, count_failed))
-
-    return (count_run, count_passed, count_failed)
 
 if __name__ == "__main__":
 
-    (count_run, count_passed, count_failed) = test_all()
-    sys.exit(count_failed)
+    unittest.main()

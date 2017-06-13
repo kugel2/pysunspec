@@ -1,6 +1,6 @@
 
 """
-    Copyright (C) 2016 SunSpec Alliance
+    Copyright (C) 2017 SunSpec Alliance
 
     Permission is hereby granted, free of charge, to any person obtaining a
     copy of this software and associated documentation files (the "Software"),
@@ -25,40 +25,43 @@ from builtins import str
 
 import sys
 import os
-import traceback
+import unittest
 
 import sunspec.core.client as client
 import sunspec.core.device as device
 import sunspec.core.util as util
 
-def test_client_device(pathlist=None, raw_traceback=False):
+class TestClientDevice(unittest.TestCase):
+    def setUp(self):
+        path = os.path.abspath(__file__)
+        self.pathlist = util.PathList(['.',
+                                       os.path.join(os.path.dirname(path),
+                                                    'devices')])
 
-    try:
-        d = client.ClientDevice(client.MAPPED, slave_id=1, name='mbmap_test_device_1.xml', pathlist = pathlist)
+    def test_client_device(self):
+        d = client.ClientDevice(client.MAPPED, slave_id=1,
+                                name='mbmap_test_device_1.xml',
+                                pathlist=self.pathlist)
         d.scan()
         d.read_points()
 
         dp = device.Device()
-        dp.from_pics(filename='pics_test_device_1.xml', pathlist=pathlist)
+        dp.from_pics(filename='pics_test_device_1.xml',
+                        pathlist=self.pathlist)
         not_equal = dp.not_equal(d)
         if not_equal:
             raise Exception(not_equal)
 
-    except Exception as e:
-        if raw_traceback:
-            traceback.print_exc(file=sys.stdout)
-        print('*** Failure test_client_device: %s' % str(e))
-        return False
-    return True
 
-def test_sunspec_client_device_1(pathlist=None, raw_traceback=False):
-
-    try:
-        d = client.SunSpecClientDevice(client.MAPPED, slave_id=1, name='mbmap_test_device_1.xml', pathlist = pathlist)
+    def test_sunspec_client_device_1(self):
+        d = client.SunSpecClientDevice(client.MAPPED, slave_id=1,
+                                        name='mbmap_test_device_1.xml',
+                                        pathlist=self.pathlist)
         d.read()
 
         dp = device.Device()
-        dp.from_pics(filename='pics_test_device_1.xml', pathlist=pathlist)
+        dp.from_pics(filename='pics_test_device_1.xml',
+                        pathlist=self.pathlist)
         not_equal = dp.not_equal(d.device)
         if not_equal:
             raise Exception(not_equal)
@@ -155,17 +158,9 @@ def test_sunspec_client_device_1(pathlist=None, raw_traceback=False):
 
         d.close()
 
-    except Exception as e:
-        if raw_traceback:
-            traceback.print_exc(file=sys.stdout)
-        print('*** Failure test_sunspec_client_device_1: %s' % str(e))
-        return False
-    return True
 
-def test_sunspec_client_device_3(pathlist=None, raw_traceback=False):
-
-    try:
-        d = client.SunSpecClientDevice(client.MAPPED, slave_id=1, name='mbmap_test_device_3.xml', pathlist = pathlist)
+    def test_sunspec_client_device_3(self):
+        d = client.SunSpecClientDevice(client.MAPPED, slave_id=1, name='mbmap_test_device_3.xml', pathlist=self.pathlist)
 
         # int16 read and write
         d.model_63002.read()
@@ -190,42 +185,7 @@ def test_sunspec_client_device_3(pathlist=None, raw_traceback=False):
 
         d.close()
 
-    except Exception as e:
-        if raw_traceback:
-            traceback.print_exc(file=sys.stdout)
-        print('*** Failure test_sunspec_client_device_3: %s' % str(e))
-        return False
-    return True
-
-tests = [
-    test_client_device,
-    test_sunspec_client_device_1,
-    test_sunspec_client_device_3
-]
-
-def test_all(pathlist=None, stop_on_failure=True, raw_traceback=False):
-
-    if pathlist is None:
-        pathlist = util.PathList(['.', os.path.join(os.path.dirname(os.path.abspath(__file__)), 'devices')])
-
-    count_passed = 0
-    count_failed = 0
-    count_run = 0
-
-    for test in tests:
-        count_run += 1
-        if test(pathlist, raw_traceback=raw_traceback) is True:
-            count_passed += 1
-        else:
-            count_failed += 1
-            if stop_on_failure is True:
-                break
-
-    print('Test client module: total tests: %d  tests run: %d  tests passed: %d  tests failed: %d' %  (len(tests), count_run, count_passed, count_failed))
-
-    return (count_run, count_passed, count_failed)
 
 if __name__ == "__main__":
 
-    (count_run, count_passed, count_failed) = test_all()
-    sys.exit(count_failed)
+    unittest.main()
