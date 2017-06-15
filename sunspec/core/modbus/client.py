@@ -25,11 +25,18 @@ from builtins import str
 from builtins import range
 from builtins import object
 from builtins import bytes
+from builtins import super
 
+import enum
+import logging
 import os
 import socket
 import struct
 import serial
+import sunspec.core.modbus.twisted_
+import twisted.internet
+import twisted.internet.serialport
+
 
 try:
     import xml.etree.ElementTree as ET
@@ -60,7 +67,7 @@ class ModbusClientTimeout(ModbusClientError):
 class ModbusClientException(ModbusClientError):
     pass
 
-def modbus_rtu_client(name=None, baudrate=None, parity=None):
+def modbus_rtu_client(name=None, baudrate=None, parity=None, cls=None):
 
     global modbus_rtu_clients
 
@@ -70,13 +77,17 @@ def modbus_rtu_client(name=None, baudrate=None, parity=None):
             raise ModbusClientError('Modbus client baudrate mismatch')
         if parity is not None and client.parity != parity:
             raise ModbusClientError('Modbus client parity mismatch')
+        if cls is not None and type(client) != cls:
+            raise ModbusClientError('Modbus client class mismatch')
     else:
         if baudrate is None:
             baudrate = 9600
         if parity is None:
             parity = PARITY_NONE
+        if cls is None:
+            cls = ModbusClientRTU
 
-        client = ModbusClientRTU(name, baudrate, parity)
+        client = cls(name, baudrate, parity)
         modbus_rtu_clients[name] = client
 
     return client
@@ -87,6 +98,187 @@ def modbus_rtu_client_remove(name=None):
 
     if modbus_rtu_clients.get(name):
         del modbus_rtu_clients[name]
+
+
+@enum.unique
+class State(enum.Enum):
+    idle = 0
+    reading = 1
+    writing = 2
+
+
+@enum.unique
+class Priority(enum.IntEnum):
+    default = 0
+
+
+class ModbusClientRTUTwistedProtocol(sunspec.core.modbus.twisted_.Protocol):
+    def __init__(self):
+        super().__init__(
+            idle_state=State.idle,
+            receivers={
+                State.idle: None,
+                State.reading: self._read_received,
+                State.writing: self._write_received,
+            },
+            default_priority=Priority.default,
+            timeout=5,
+        )
+
+        self.data = None
+        self.remaining = None
+
+        self.response_length = None
+        self.length_found = False
+
+        self._slave_id = None
+        self._addr = None
+        self._trace_func = False
+
+    def _transmit_request(self, request):
+        self.data = bytearray()
+        self.response_length = 5
+        self.length_found = False
+
+        # TODO: maybe flush the input buffer?  but with the queueing behind this
+        #       this isn't the place to do so if we do
+        # self._transport.flushInput()
+
+        super()._transmit_request(request=request)
+
+    def read(self, slave_id, addr, count, op, trace_func, max_count):
+        # TODO: handle max_count
+
+        self._slave_id = slave_id
+        self._addr = addr
+        self._trace_func = trace_func
+
+        req = struct.pack('>BBHH', int(slave_id), op, int(addr), int(count))
+        req = bytes(req)
+        req += struct.pack('>H', computeCRC(req))
+
+        if self._trace_func:
+            s = '%s:%s[addr=%s] ->' % (self.name, str(slave_id), addr)
+            for c in req:
+                s += '%02X' % (ord(c))
+            self._trace_func(s)
+
+        return self.request(req, state=State.reading)
+
+    def _read_received(self, data):
+        self.data.extend(data)
+
+        if not self.length_found and len(self.data) >= self.response_length:
+            if not (self.data[1] & 0x80):
+                self.response_length += self.data[2]
+            self.length_found = True
+
+        if len(self.data) < self.response_length:
+            return None
+
+        logging.debug('done after {} (expected {})\n'.format(
+            len(self.data),
+            self.response_length,
+        ))
+
+        # TODO: this seems fishy at best
+        self.data = self.data[:self.response_length]
+
+        received_crc = (self.data[-2] << 8) | self.data[-1]
+        calculated_crc = computeCRC(self.data[:-2])
+
+        if calculated_crc != received_crc:
+            raise ModbusClientError(
+                'CRC error: calculated {} but received {}'.format(
+                    calculated_crc,
+                    received_crc,
+                )
+            )
+
+        if len(self.data) > self.response_length:
+            raise ModbusClientException('Modbus exception %d' % (self.data[2]))
+
+        if self._trace_func:
+            s = '%s:%s[addr=%s] <--' % (self.name, str(self._slave_id), self._addr)
+            for c in self.data:
+                s += '%02X' % (ord(c))
+            self._trace_func(s)
+
+        return self.data[3:-2]
+
+    def _write_received(self):
+        pass
+
+
+class ModbusClientRTUTwisted(object):
+    def __init__(self, name='/dev/ttyUSB0', baudrate=9600, parity=None):
+        self.name = name
+        self.baudrate = baudrate
+        self.parity = parity
+        self.serial = None
+        self.timeout = .5
+        self.write_timeout = .5
+        self.devices = {}
+
+        self.protocol = ModbusClientRTUTwistedProtocol()
+
+        self.open()
+
+    def open(self):
+        """Open the RTU client serial interface.
+        """
+        if self.parity == PARITY_EVEN:
+            parity = twisted.internet.serialport.PARITY_EVEN
+        else:
+            parity = twisted.internet.serialport.PARITY_NONE
+
+        if self.name != TEST_NAME:
+            self.serial = twisted.internet.serialport.SerialPort(
+                protocol=self.protocol,
+                deviceNameOrPortNumber=self.name,
+                reactor=twisted.internet.reactor,
+                baudrate=self.baudrate,
+                bytesize=twisted.internet.serialport.EIGHTBITS,
+                parity=parity,
+                stopbits=twisted.internet.serialport.STOPBITS_ONE,
+                xonxoff=False,
+                rtscts=False,
+            )
+
+    def add_device(self, slave_id, device):
+        """Add a device to the RTU client.
+
+        Parameters:
+
+            slave_id :
+                Modbus slave id.
+
+            device :
+                Device to add to the client.
+        """
+
+        self.devices[slave_id] = device
+
+    def remove_device(self, slave_id):
+        """Remove a device from the RTU client.
+
+        Parameters:
+
+            slave_id :
+                Modbus slave id.
+        """
+
+        if self.devices.get(slave_id):
+            del self.devices[slave_id]
+
+        # if no more devices using the client interface, close and remove the client
+        if len(self.devices) == 0:
+            self.close()
+            modbus_rtu_client_remove(self.name)
+
+    def read(self, slave_id, addr, count, op=FUNC_READ_HOLDING, trace_func=None, max_count=REQ_COUNT_MAX):
+        return self.protocol.read(slave_id, addr, count, op, trace_func, max_count)
+
 
 class ModbusClientRTU(object):
     """A Modbus RTU client that multiple devices can use to access devices over
@@ -422,6 +614,76 @@ class ModbusClientRTU(object):
                 write_offset += write_count
         else:
             raise ModbusClientError('Client serial port not open: %s' % self.name)
+
+
+class ModbusClientDeviceRTUTwisted(object):
+    def __init__(self, slave_id, name, baudrate=None, parity=None, timeout=None, ctx=None, trace_func=None, max_count=None):
+        if max_count is None:
+            max_count = REQ_COUNT_MAX
+
+        self.slave_id = slave_id
+        self.name = name
+        self.client = None
+        self.ctx = ctx
+        self.trace_func = trace_func
+        self.max_count = max_count
+
+        self.client = modbus_rtu_client(
+            name=name,
+            baudrate=baudrate,
+            parity=parity,
+            cls=ModbusClientRTUTwisted
+        )
+        if self.client is None:
+            raise ModbusClientError('No modbus rtu client set for device')
+        self.client.add_device(self.slave_id, self)
+
+        if timeout is not None and self.client.serial is not None:
+            self.client.serial.timeout = timeout
+            self.client.serial.writeTimeout = timeout
+
+    def close(self):
+        """Close the device. Called when device is not longer in use.
+        """
+
+        if self.client:
+            self.client.remove_device(self.slave_id)
+
+    def read(self, addr, count, op=FUNC_READ_HOLDING):
+        """Read Modbus device registers.
+
+        Parameters:
+
+            addr :
+                Starting Modbus address.
+
+            count :
+                Read length in Modbus registers.
+
+            op :
+                Modbus function code for request.
+
+        Returns:
+
+            Byte string containing register contents.
+        """
+
+        return self.client.read(self.slave_id, addr, count, op=op, trace_func=self.trace_func, max_count=self.max_count)
+
+    def write(self, addr, data):
+        """Write Modbus device registers.
+
+        Parameters:
+
+            addr :
+                Starting Modbus address.
+
+            count :
+                Byte string containing register contents.
+        """
+
+        return self.client.write(self.slave_id, addr, data, trace_func=self.trace_func, max_count=self.max_count)
+
 
 class ModbusClientDeviceRTU(object):
     """Provides access to a Modbus RTU device.

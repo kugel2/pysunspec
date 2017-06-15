@@ -32,8 +32,10 @@ import sunspec.core.device as device
 import sunspec.core.util as util
 import sunspec.core.suns as suns
 from sunspec.core.util import SunSpecError
+import twisted.internet.defer
 
 RTU = 'RTU'
+RTU_TWISTED = 'RTU Twisted'
 TCP = 'TCP'
 MAPPED = 'Mapped'
 
@@ -140,6 +142,8 @@ class ClientDevice(device.Device):
         try:
             if device_type == RTU:
                 self.modbus_device = modbus.ModbusClientDeviceRTU(slave_id, name, baudrate, parity, timeout, self, trace, max_count=max_count)
+            elif device_type == RTU_TWISTED:
+                self.modbus_device = modbus.ModbusClientDeviceRTUTwisted(slave_id, name, baudrate, parity, timeout, self, trace, max_count=max_count)
             elif device_type == TCP:
                 self.modbus_device = modbus.ModbusClientDeviceTCP(slave_id, ipaddr, ipport, timeout, self, trace, max_count=max_count)
             elif device_type == MAPPED:
@@ -290,6 +294,271 @@ class ClientDevice(device.Device):
 
         if connect:
             self.modbus_device.disconnect()
+
+
+class ClientDeviceTwisted(device.Device):
+    def __init__(self, device_type, slave_id=None, name=None, pathlist = None, baudrate=None, parity=None, ipaddr=None, ipport=None,
+                 timeout=None, trace=False, max_count=None):
+        device.Device.__init__(self, addr=None)
+
+        self.type = device_type
+        self.name = name
+        self.pathlist = pathlist
+        self.slave_id = slave_id
+        self.modbus_device = None
+        self.retry_count = 2
+        self.base_addr_list = [40000, 0, 50000]
+
+        try:
+            if device_type == RTU:
+                self.modbus_device = modbus.ModbusClientDeviceRTU(slave_id, name, baudrate, parity, timeout, self, trace, max_count=max_count)
+            elif device_type == RTU_TWISTED:
+                self.modbus_device = modbus.ModbusClientDeviceRTUTwisted(slave_id, name, baudrate, parity, timeout, self, trace, max_count=max_count)
+            elif device_type == TCP:
+                self.modbus_device = modbus.ModbusClientDeviceTCP(slave_id, ipaddr, ipport, timeout, self, trace, max_count=max_count)
+            elif device_type == MAPPED:
+                if name is not None:
+                    self.modbus_device = modbus.ModbusClientDeviceMapped(slave_id, name, pathlist, self)
+                else:
+                    if self.modbus_device is not None:
+                        self.modbus_device.close()
+                    raise SunSpecClientError('Map file required for mapped device')
+        except modbus.ModbusClientError as e:
+            if self.modbus_device is not None:
+                self.modbus_device.close()
+            raise SunSpecClientError('Modbus error: %s' % str(e))
+
+    def close(self):
+
+        if self.modbus_device is not None:
+            self.modbus_device.close()
+
+    def read(self, addr, count):
+        if self.modbus_device is not None:
+            return self.modbus_device.read(addr, count)
+        else:
+            raise SunSpecClientError('No modbus device set for SunSpec device')
+
+    def write(self, addr, data):
+        if self.modbus_device is not None:
+            return self.modbus_device.write(addr, data)
+        else:
+            raise SunSpecClientError('No modbus device set for SunSpec device')
+
+    def read_points(self):
+        """Read the points for all models in the device from the physical
+        device.
+        """
+
+        for model in self.models_list:
+            model.read_points()
+
+    @twisted.internet.defer.inlineCallbacks
+    def scan(self, progress=None, delay=None):
+        error = ''
+
+        connect = False
+        if self.modbus_device and type(self.modbus_device) == modbus.ModbusClientDeviceTCP:
+            self.modbus_device.connect()
+            connect = True
+
+            if delay is not None:
+                time.sleep(delay)
+
+        if self.base_addr is None:
+            for addr in self.base_addr_list:
+                # print 'trying base address %s' % (addr)
+                data = yield self.read(addr, 3)
+
+                if data[:4] == bytes(b'SunS'):
+                    self.base_addr = addr
+                    # print 'device base address = %d' % self.base_addr
+                    break
+                else:
+                    error = 'Device responded - not SunSpec register map'
+
+                if delay is not None:
+                    time.sleep(delay)
+
+        if self.base_addr is not None:
+            # print 'base address = %s' % (self.base_addr)
+            model_id = util.data_to_u16(data[4:6])
+            addr = self.base_addr + 2
+
+            while model_id != suns.SUNS_END_MODEL_ID:
+                # read model and model len separately due to some devices not supplying
+                # count for the end model id
+                data = yield self.read(addr + 1, 1)
+                if data and len(data) == 2:
+                    if progress is not None:
+                        cont = progress('Scanning model %s' % (model_id))
+                        if not cont:
+                            raise SunSpecClientError('Device scan terminated')
+                    model_len = util.data_to_u16(data)
+                    # print 'model_id = %s  model_len = %s' % (model_id, model_len)
+
+                    # move address past model id and length
+                    model = ClientModelTwisted(self, model_id, addr + 2, model_len)
+                    # print 'loading model %s at %d' % (model_id, addr + 2)
+                    try:
+                        model.load()
+                    except Exception as e:
+                        model.load_error = str(e)
+                    self.add_model(model)
+
+                    addr += model_len + 2
+                    data = yield self.read(addr, 1)
+                    if data and len(data) == 2:
+                        model_id = util.data_to_u16(data)
+                    else:
+                        break
+                else:
+                    break
+
+                if delay is not None:
+                    time.sleep(delay)
+
+        else:
+            if not error:
+                error = 'Unknown error'
+            raise SunSpecClientError(error)
+
+        if connect:
+            self.modbus_device.disconnect()
+
+
+class ClientModelTwisted(device.Model):
+    """A derived class based on :const:`sunspec.core.device.Model`. It adds
+    Modbus device access capability to the model base class.
+
+    Parameters:
+
+        dev :
+            Device object associated with the model.
+
+        mid :
+            Model id.
+
+        addr :
+            Starting Modbus address of the model.
+
+        mlen :
+            Model length in Modbus registers.
+
+        index :
+            Model index.
+
+    Raises:
+
+        SunSpecClientError: Raised for any sunspec module error.
+    """
+
+    def __init__(self, dev=None, mid=None, addr=0, mlen=None, index=1):
+
+        device.Model.__init__(self, device=dev, mid=mid, addr=addr, mlen=mlen, index=index)
+
+    def load(self):
+        """Create the block and point objects within the model object based on
+        the corresponding SunSpec model definition.
+        """
+
+        device.Model.load(self, block_class=ClientBlock, point_class=ClientPoint)
+
+    @twisted.internet.defer.inlineCallbacks
+    def read_points(self):
+        """Read all points in the model from the physical device.
+        """
+
+        if self.model_type is not None:
+            # read current model
+            try:
+                end_index = len(self.read_blocks)
+                if end_index == 1:
+                    data = yield self.device.read(self.addr, self.len)
+                else:
+                    data = bytes()
+                    index = 0
+                    while index < end_index:
+                        addr = self.read_blocks[index]
+                        index += 1
+                        if index < end_index:
+                            read_len = self.read_blocks[index] - addr
+                        else:
+                            read_len = self.addr + self.len - addr
+                        data += self.device.read(addr, read_len)
+                if data:
+                    # print 'data len = ', len(data)
+                    data_len = len(data)//2
+                    if data_len != self.len:
+                        raise SunSpecClientError('Error reading model %s' % self.model_type)
+
+                    #  for each repeating block
+                    for block in self.blocks:
+                        # scale factor points
+                        for pname, point in block.points_sf.items():
+                            offset = int(point.addr) - int(self.addr)
+                            if point.point_type.data_to is not None:
+                                byte_offset = offset * 2
+                                # print pname, point, offset, byte_offset, (byte_offset + (int(point.point_type.len) * 2)), point.point_type.len
+                                point.value_base = point.point_type.data_to(data[byte_offset:byte_offset + (int(point.point_type.len) * 2)])
+                                if not point.point_type.is_impl(point.value_base):
+                                    point.value_base = None
+                            else:
+                                raise SunSpecClientError('No data_to function set for %s : %s' % (pname, point.point_type))
+
+                        # non-scale factor points
+                        for pname, point in block.points.items():
+                            offset = int(point.addr) - int(self.addr)
+                            if point.point_type.data_to is not None:
+                                byte_offset = offset * 2
+                                # print pname, point, offset, byte_offset, (byte_offset + (int(point.point_type.len) * 2)), point.point_type.len
+                                point.value_base = point.point_type.data_to(data[byte_offset:byte_offset + (int(point.point_type.len) * 2)])
+                                if point.point_type.is_impl(point.value_base):
+                                    if point.sf_point is not None:
+                                        point.value_sf = point.sf_point.value_base
+                                else:
+                                    point.value_base = None
+                                    point.value_sf = None
+                            else:
+                                raise SunSpecClientError('No data_to function set for %s : %s' % (pname, point.point_type))
+
+            except SunSpecError as e:
+                raise SunSpecClientError(e)
+            except modbus.ModbusClientError as e:
+                raise SunSpecClientError('Modbus error: %s' % str(e))
+            except:
+                raise
+
+    def write_points(self):
+        """Write all points that have been modified since the last write
+        operation to the physical device.
+        """
+
+        addr = None
+        next_addr = None
+        data = bytes()
+
+        for block in self.blocks:
+            for point in block.points_list:
+                if point.dirty:
+                    point_addr = int(point.addr)
+                    point_len = int(point.point_type.len)
+                    point_data = point.point_type.to_data(point.value_base, (point_len * 2))
+                    if addr is None:
+                        addr = point_addr
+                        data = bytes()
+                    else:
+                        if point_addr != next_addr:
+                            block.model.device.write(addr, data)
+                            addr = point_addr
+                            data = bytes()
+                    next_addr = point_addr + point_len
+                    data += point_data
+                    point.dirty = False
+            if addr is not None:
+                block.model.device.write(addr, data)
+                addr = None
+
 
 class ClientModel(device.Model):
     """A derived class based on :const:`sunspec.core.device.Model`. It adds
@@ -565,7 +834,7 @@ class SunSpecClientModelBase(object):
     def read(self):
         """Read all points in the model from the physical device."""
 
-        self.model.read_points()
+        return self.model.read_points()
 
     def write(self):
         """Write all points that have been modified since the last write
@@ -773,40 +1042,40 @@ class SunSpecClientDevice(object):
                  timeout=None, trace=False, scan_progress=None, scan_delay=None, max_count=None):
 
         # super(self.__class__, self).__init__(device_type, slave_id, name, pathlist, baudrate, parity, ipaddr, ipport)
-        self.device = ClientDevice(device_type, slave_id, name, pathlist, baudrate, parity, ipaddr, ipport, timeout, trace, max_count=max_count)
+        client_device = ClientDevice
+        if device_type == RTU_TWISTED:
+            client_device = ClientDeviceTwisted
+        self.device = client_device(device_type, slave_id, name, pathlist, baudrate, parity, ipaddr, ipport, timeout, trace, max_count=max_count)
         self.models = []
 
-        try:
-            # scan device models
+        if device_type != RTU_TWISTED:
             self.device.scan(progress=scan_progress, delay=scan_delay)
+            self.prep()
 
-            # create named attributes for each model
-            for model in self.device.models_list:
-                model_id = model.id
-                c = model_class_get(model_id)
-                if model.model_type is not None:
-                    name = model.model_type.name
-                else:
-                    name = 'model_' + str(model_id)
-                model_class = c(model, name)
-                existing = getattr(self, name, None)
-                # if model id already defined
-                if existing:
-                    # if model id definition is not a list, turn it into a list and add existing model
-                    if type(self[name]) is not list:
-                        # model instance index starts at 1 so first first list element is None
-                        setattr(self, name, [None])
-                        self[name].append(existing)
-                    # add new model to the list
-                    self[name].append(model_class)
-                # if first model id instance, set attribute as model
-                else:
-                    setattr(self, name, model_class)
-                    self.models.append(name)
-        except Exception as e:
-            if self.device is not None:
-                self.device.close()
-            raise
+    def prep(self):
+        # create named attributes for each model
+        for model in self.device.models_list:
+            model_id = model.id
+            c = model_class_get(model_id)
+            if model.model_type is not None:
+                name = model.model_type.name
+            else:
+                name = 'model_' + str(model_id)
+            model_class = c(model, name)
+            existing = getattr(self, name, None)
+            # if model id already defined
+            if existing:
+                # if model id definition is not a list, turn it into a list and add existing model
+                if type(self[name]) is not list:
+                    # model instance index starts at 1 so first first list element is None
+                    setattr(self, name, [None])
+                    self[name].append(existing)
+                # add new model to the list
+                self[name].append(model_class)
+            # if first model id instance, set attribute as model
+            else:
+                setattr(self, name, model_class)
+                self.models.append(name)
 
     def close(self):
         """Release resources associated with the device. Should be called when
