@@ -20,8 +20,8 @@ setup(name = 'pysunspec',
             ]
       },
       extras_require={
-            ':python_version < "3.4"': ["enum34"],
-            ':sys_platform == "win32"': ["pypiwin32"],
+            ':python_version < "3.4"': ['enum34'],
+            ':sys_platform == "win32"': ['pypiwin32'],
       },
       install_requires = [
             'pyserial',
