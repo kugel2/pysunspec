@@ -21,13 +21,18 @@ setup(name = 'pysunspec',
       },
       extras_require={
             ':python_version < "3.4"': ['enum34'],
-            ':sys_platform == "win32"': ['pypiwin32'],
+            ':sys_platform == "linux"': ['twisted'],
+            ':sys_platform == "win32"': [
+                  'twisted[windows_platform]',
+                  # < 3 due to https://twistedmatrix.com/trac/ticket/8159
+                  'pyserial<3',
+            ],
+            ':sys_platform == "darwin"': ['twisted[osx_platform]'],
+            # TODO: and for cygwin?
       },
       install_requires = [
-            'pyserial',
             'future',
             'attrs',
             'click',
-            'twisted',
       ],
 )
