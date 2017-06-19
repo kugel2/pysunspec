@@ -21,6 +21,7 @@ setup(name = 'pysunspec',
       },
       extras_require={
             ':python_version < "3.4"': ['enum34'],
+            ':sys_platform == "linux2"': ['twisted', 'pyserial'],
             ':sys_platform == "linux"': ['twisted', 'pyserial'],
             ':sys_platform == "win32"': [
                   'twisted[windows_platform]',
