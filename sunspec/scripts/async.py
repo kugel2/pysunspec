@@ -126,7 +126,7 @@ def twisted_(name, slave_id, write):
 
     d.addCallback(stop_reactor)
     d.addErrback(errbackhook)
-    d.addErrback(stop_reactor, reason='exception raised')
+    d.addErrback(lambda _: stop_reactor(reason='exception raised'))
 
     twisted.internet.reactor.callLater(5, stop_reactor, reason='timeout')
 
