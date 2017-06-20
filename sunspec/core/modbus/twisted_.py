@@ -60,6 +60,7 @@ class Protocol(twisted.internet.protocol.Protocol,
         logger.debug('Protocol.makeConnection(): {}'.format(transport))
 
     def _start_transaction(self, deferred):
+        logging.debug('_start_transaction()')
         if self._active:
             raise Exception('Protocol is already active')
 
@@ -81,6 +82,7 @@ class Protocol(twisted.internet.protocol.Protocol,
 
     def _transaction_over_after_delay(self):
         self._active = False
+        logging.debug('_transaction_over_after_delay()')
         self._get()
 
     def request(self, data, state, priority=None):
@@ -102,6 +104,7 @@ class Protocol(twisted.internet.protocol.Protocol,
         self._get()
 
     def _get(self):
+        logging.debug('_get(): active is {}'.format(self._active))
         if not self._active:
             try:
                 request = self.requests.get(block=False)
@@ -114,7 +117,8 @@ class Protocol(twisted.internet.protocol.Protocol,
         self._start_transaction(deferred=request.deferred)
         self.state = request.state
 
-        logger.debug('_transmit_request()')
+        logging.debug('_transmit_request()')
+        logging.debug('{} --'.format(' '.join('{:02x}'.format(b) for b in request.data)))
         self._transport.write(request.data)
         self.setTimeout(self._timeout)
 

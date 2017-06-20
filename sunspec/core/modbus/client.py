@@ -135,6 +135,8 @@ class ModbusClientRTUTwistedProtocol(sunspec.core.modbus.twisted_.Protocol):
         self._addr = None
         self._trace_func = False
 
+        self._function_code = None
+
     def _transmit_request(self, request):
         self.data = bytearray()
         self.response_length = 5
@@ -171,7 +173,10 @@ class ModbusClientRTUTwistedProtocol(sunspec.core.modbus.twisted_.Protocol):
         if not self.length_found and len(self.data) >= self.response_length:
             if not (self.data[1] & 0x80):
                 self.response_length += self.data[2]
-            self.length_found = True
+                self.length_found = True
+            # TODO: check for modbus exceptions
+            # else:
+            #     self.errback(ModbusClientException(self.data[2]))
 
         if len(self.data) < self.response_length:
             return None
@@ -195,6 +200,7 @@ class ModbusClientRTUTwistedProtocol(sunspec.core.modbus.twisted_.Protocol):
                 )
             )
 
+        # TODO: would have to be above the fishy stuff
         if len(self.data) > self.response_length:
             raise ModbusClientException('Modbus exception %d' % (self.data[2]))
 
@@ -206,8 +212,81 @@ class ModbusClientRTUTwistedProtocol(sunspec.core.modbus.twisted_.Protocol):
 
         return self.data[3:-2]
 
-    def _write_received(self):
-        pass
+    def write(self, slave_id, addr, data, trace_func, max_count):
+        # TODO: handle max_count
+
+        self._slave_id = slave_id
+        self._addr = addr
+        self._trace_func = trace_func
+        self._function_code = FUNC_WRITE_MULTIPLE
+
+        len_data = len(data)
+        count = len_data//2
+
+        req = struct.pack('>BBHHB', int(slave_id), self._function_code, int(addr), count, len_data)
+        req = bytes(req)
+        req += data
+        req += struct.pack('>H', computeCRC(req))
+
+        if self._trace_func:
+            s = '%s:%s[addr=%s] ->' % (self.name, str(slave_id), addr)
+            for c in req:
+                s += '%02X' % (ord(c))
+            self._trace_func(s)
+
+        logging.debug(' '.join('{:02x}'.format(b) for b in req))
+        return self.request(req, state=State.writing)
+
+    def _write_received(self, data):
+        self.data.extend(data)
+
+        if not self.length_found and len(self.data) >= self.response_length:
+            if not (self.data[1] & 0x80):
+                self.response_length = 8
+                self.length_found = True
+            # TODO: check for modbus exceptions
+            # else:
+            #     self.errback(ModbusClientException(self.data[2]))
+
+        if len(self.data) < self.response_length:
+            return None
+
+        logging.debug('done after {} (expected {})\n'.format(
+            len(self.data),
+            self.response_length,
+        ))
+
+        # TODO: this seems fishy at best
+        self.data = self.data[:self.response_length]
+
+        received_crc = (self.data[-2] << 8) | self.data[-1]
+        calculated_crc = computeCRC(self.data[:-2])
+
+        if calculated_crc != received_crc:
+            raise ModbusClientError(
+                'CRC error: calculated {} but received {}'.format(
+                    calculated_crc,
+                    received_crc,
+                )
+            )
+
+        # TODO: would have to be above the fishy stuff
+        if len(self.data) > self.response_length:
+            raise ModbusClientException('Modbus exception %d' % (self.data[2]))
+
+        if self._trace_func:
+            s = '%s:%s[addr=%s] <--' % (self.name, str(self._slave_id), self._addr)
+            for c in self.data:
+                s += '%02X' % c
+            self._trace_func(s)
+
+        x = struct.unpack('>BBHHH', self.data)
+        resp_slave_id, resp_func, resp_addr, resp_count, resp_crc = x
+
+        if resp_slave_id != self._slave_id or resp_func != self._function_code or resp_addr != self._addr: # TODO: or resp_count != count:
+            raise ModbusClientError('Modbus response format error')
+
+        return x
 
 
 class ModbusClientRTUTwisted(object):
@@ -278,6 +357,9 @@ class ModbusClientRTUTwisted(object):
 
     def read(self, slave_id, addr, count, op=FUNC_READ_HOLDING, trace_func=None, max_count=REQ_COUNT_MAX):
         return self.protocol.read(slave_id, addr, count, op, trace_func, max_count)
+
+    def write(self, slave_id, addr, data, trace_func=None, max_count=REQ_COUNT_MAX):
+        return self.protocol.write(slave_id, addr, data, trace_func, max_count)
 
 
 class ModbusClientRTU(object):

@@ -368,7 +368,14 @@ class ClientDeviceTwisted(device.Device):
         if self.base_addr is None:
             for addr in self.base_addr_list:
                 # print 'trying base address %s' % (addr)
-                data = yield self.read(addr, 3)
+                try:
+                    data = yield self.read(addr, 3)
+                except modbus.ModbusClientException:
+                    # TODO: handle the exception number directly
+                    # TODO: twist this
+                    if delay is not None:
+                        time.sleep(delay)
+                    continue
 
                 if data[:4] == bytes(b'SunS'):
                     self.base_addr = addr
@@ -377,8 +384,8 @@ class ClientDeviceTwisted(device.Device):
                 else:
                     error = 'Device responded - not SunSpec register map'
 
-                if delay is not None:
-                    time.sleep(delay)
+            else:
+                raise Exception('Base address not found')
 
         if self.base_addr is not None:
             # print 'base address = %s' % (self.base_addr)
@@ -529,6 +536,7 @@ class ClientModelTwisted(device.Model):
             except:
                 raise
 
+    @twisted.internet.defer.inlineCallbacks
     def write_points(self):
         """Write all points that have been modified since the last write
         operation to the physical device.
@@ -549,14 +557,14 @@ class ClientModelTwisted(device.Model):
                         data = bytes()
                     else:
                         if point_addr != next_addr:
-                            block.model.device.write(addr, data)
+                            yield block.model.device.write(addr, data)
                             addr = point_addr
                             data = bytes()
                     next_addr = point_addr + point_len
                     data += point_data
                     point.dirty = False
             if addr is not None:
-                block.model.device.write(addr, data)
+                yield block.model.device.write(addr, data)
                 addr = None
 
 
@@ -748,11 +756,25 @@ class ClientPoint(device.Point):
 
         device.Point.__init__(self, block, point_type, addr, sf_point, value)
 
+    def read(self):
+        """Read the point from the physical device.
+        """
+
+        data = self.block.model.device.read(
+            int(self.addr),
+            int(self.point_type.len), # TODO: why no * 2 here but below?
+        )
+        self.value_base = self.point_type.data_to(data)
+        self.dirty = False
+
+        return self.value
+
     def write(self):
         """Write the point to the physical device.
         """
 
-        data = self.point_type.to_data(self.value_base, (int(self.point_type.len) * 2))
+        data = self.point_type.to_data(self.value_base,
+                                       (int(self.point_type.len) * 2))
         self.block.model.device.write(int(self.addr), data)
         self.dirty = False
 
@@ -840,7 +862,7 @@ class SunSpecClientModelBase(object):
         """Write all points that have been modified since the last write
         operation to the physical device."""
 
-        self.model.write_points()
+        return self.model.write_points()
 
     def __str__(self):
         s = '\n%s (%s):\n' % (self.name, self.model.id)
