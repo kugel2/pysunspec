@@ -234,7 +234,16 @@ class ClientDevice(device.Device):
             for addr in self.base_addr_list:
                 # print 'trying base address %s' % (addr)
                 try:
-                    data = self.read(addr, 3)
+                    try:
+                        data = self.read(addr, 3)
+                    except modbus.ModbusClientException as e:
+                        if e != modbus.ModbusClientException.illegal_data_address:
+                            raise
+
+                        # TODO: twist this
+                        if delay is not None:
+                            time.sleep(delay)
+                        continue
 
                     if data[:4] == bytes(b'SunS'):
                         self.base_addr = addr
@@ -245,9 +254,6 @@ class ClientDevice(device.Device):
                 except SunSpecClientError as e:
                     if not error:
                         error = str(e)
-
-                if delay is not None:
-                    time.sleep(delay)
 
         if self.base_addr is not None:
             # print 'base address = %s' % (self.base_addr)

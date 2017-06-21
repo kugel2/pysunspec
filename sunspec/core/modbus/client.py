@@ -575,7 +575,7 @@ class ModbusClientRTU(object):
             raise ModbusClientError('CRC error')
 
         if except_code:
-            raise ModbusClientExceptionfrom_code(except_code)
+            raise ModbusClientException.from_code(except_code)
 
         return resp[3:-2]
 
