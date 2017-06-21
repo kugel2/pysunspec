@@ -173,6 +173,14 @@ def pack_rtu_read_request(slave_id, addr, count, op):
     req += struct.pack('>H', computeCRC(req))
     return req
 
+def pack_rtu_write_request(slave_id, addr, data, func):
+    req = struct.pack('>BBHHB', int(slave_id), func, int(addr),
+                      len(data) // 2, len(data))
+    req = bytes(req)
+    req += data
+    req += struct.pack('>H', computeCRC(req))
+    return req
+
 
 @enum.unique
 class State(enum.Enum):
@@ -247,13 +255,7 @@ class ModbusClientRTUTwistedProtocol(sunspec.core.modbus.twisted_.Protocol):
         self._trace_func = trace_func
         self._function_code = FUNC_WRITE_MULTIPLE
 
-        len_data = len(data)
-        count = len_data//2
-
-        req = struct.pack('>BBHHB', int(slave_id), self._function_code, int(addr), count, len_data)
-        req = bytes(req)
-        req += data
-        req += struct.pack('>H', computeCRC(req))
+        req = pack_rtu_write_request(slave_id, addr, data, self._function_code)
 
         if self._trace_func:
             s = '%s:%s[addr=%s] ->' % (self.name, str(slave_id), addr)
@@ -638,13 +640,8 @@ class ModbusClientRTU(object):
         len_found = False
         except_code = None
         func = FUNC_WRITE_MULTIPLE
-        len_data = len(data)
-        count = len_data//2
 
-        req = struct.pack('>BBHHB', int(slave_id), func, int(addr), count, len_data)
-        req = bytes(req)
-        req += data
-        req += struct.pack('>H', computeCRC(req))
+        req = pack_rtu_write_request(slave_id, addr, data, func)
 
         if trace_func:
             s = '%s:%s[addr=%s] ->' % (self.name, str(slave_id), addr)
@@ -688,7 +685,7 @@ class ModbusClientRTU(object):
             raise ModbusClientExceptionfrom_code(except_code)
         else:
             resp_slave_id, resp_func, resp_addr, resp_count, resp_crc = struct.unpack('>BBHHH', resp)
-            if resp_slave_id != slave_id or resp_func != func or resp_addr != addr or resp_count != count:
+            if resp_slave_id != slave_id or resp_func != func or resp_addr != addr or resp_count != len(data)//2:
                 raise ModbusClientError('Modbus response format error')
 
     def write(self, slave_id, addr, data, trace_func=None, max_count=REQ_COUNT_MAX):
