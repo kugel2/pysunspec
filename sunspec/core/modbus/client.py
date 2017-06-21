@@ -27,6 +27,7 @@ from builtins import object
 from builtins import bytes
 from builtins import super
 
+import attr
 import enum
 import logging
 import os
@@ -64,8 +65,75 @@ class ModbusClientError(Exception):
 class ModbusClientTimeout(ModbusClientError):
     pass
 
-class ModbusClientException(ModbusClientError):
-    pass
+
+@attr.s
+class _ModbusClientException(Exception):
+    code = attr.ib()
+    text = attr.ib()
+    details = attr.ib()
+
+class ModbusClientException(_ModbusClientException, enum.Enum):
+    illegal_function = (
+        1,
+        'Illegal Function',
+        'Function code received in the query is not recognized or allowed by slave'
+    )
+    illegal_data_address = (
+        2,
+        'Illegal Data Address',
+        'Data address of some or all the required entities are not allowed or do not exist in slave'
+    )
+    illegal_data_value = (
+        3,
+        'Illegal Data Value',
+        'Value is not accepted by slave'
+    )
+    slave_device_failure = (
+        4,
+        'Slave Device Failure',
+        'Unrecoverable error occurred while slave was attempting to perform requested action'
+    )
+    acknowledge = (
+        5,
+        'Acknowledge',
+        'Slave has accepted request and is processing it, but a long duration of time is required. This response is returned to prevent a timeout error from occurring in the master. Master can next issue a Poll Program Complete message to determine whether processing is completed'
+    )
+    slave_device_busy = (
+        6,
+        'Slave Device Busy',
+        'Slave is engaged in processing a long-duration command. Master should retry later'
+    )
+    negative_acknowledge = (
+        7,
+        'Negative Acknowledge',
+        'Slave cannot perform the programming functions. Master should request diagnostic or error information from slave'
+    )
+    memory_parity_error = (
+        8,
+        'Memory Parity Error',
+        'Slave detected a parity error in memory. Master can retry the request, but service may be required on the slave device'
+    )
+    gateway_path_unavailable = (
+        10,
+        'Gateway Path Unavailable',
+        'Specialized for Modbus gateways. Indicates a misconfigured gateway'
+    )
+    gateway_target_device_failed_to_respond = (
+        11,
+        'Gateway Target Device Failed to Respond',
+        'Specialized for Modbus gateways. Sent when slave fails to respond'
+    )
+
+    def __str__(self):
+        return '[Code {code}] {text}: {details}'.format(
+            **attr.asdict(self.value)
+        )
+
+    @classmethod
+    def from_code(cls, code):
+        error, = (e for e in cls if e.code == code)
+
+        return error
 
 def modbus_rtu_client(name=None, baudrate=None, parity=None, cls=None):
 
@@ -175,8 +243,9 @@ class ModbusClientRTUTwistedProtocol(sunspec.core.modbus.twisted_.Protocol):
                 self.response_length += self.data[2]
                 self.length_found = True
             # TODO: check for modbus exceptions
-            # else:
-            #     self.errback(ModbusClientException(self.data[2]))
+            else:
+                self.errback(ModbusClientException.from_code(self.data[2]))
+                return
 
         if len(self.data) < self.response_length:
             return None
@@ -202,7 +271,7 @@ class ModbusClientRTUTwistedProtocol(sunspec.core.modbus.twisted_.Protocol):
 
         # TODO: would have to be above the fishy stuff
         if len(self.data) > self.response_length:
-            raise ModbusClientException('Modbus exception %d' % (self.data[2]))
+            raise ModbusClientException.from_code(self.data[2])
 
         if self._trace_func:
             s = '%s:%s[addr=%s] <--' % (self.name, str(self._slave_id), self._addr)
@@ -245,8 +314,8 @@ class ModbusClientRTUTwistedProtocol(sunspec.core.modbus.twisted_.Protocol):
                 self.response_length = 8
                 self.length_found = True
             # TODO: check for modbus exceptions
-            # else:
-            #     self.errback(ModbusClientException(self.data[2]))
+            else:
+                self.errback(ModbusClientException.from_code(self.data[2]))
 
         if len(self.data) < self.response_length:
             return None
@@ -272,7 +341,7 @@ class ModbusClientRTUTwistedProtocol(sunspec.core.modbus.twisted_.Protocol):
 
         # TODO: would have to be above the fishy stuff
         if len(self.data) > self.response_length:
-            raise ModbusClientException('Modbus exception %d' % (self.data[2]))
+            raise ModbusClientException.from_code(self.data[2])
 
         if self._trace_func:
             s = '%s:%s[addr=%s] <--' % (self.name, str(self._slave_id), self._addr)
@@ -546,7 +615,7 @@ class ModbusClientRTU(object):
             raise ModbusClientError('CRC error')
 
         if except_code:
-            raise ModbusClientException('Modbus exception %d' % (except_code))
+            raise ModbusClientExceptionfrom_code(except_code)
 
         return resp[3:-2]
 
@@ -654,7 +723,7 @@ class ModbusClientRTU(object):
             raise ModbusClientError('CRC error')
 
         if except_code:
-            raise ModbusClientException('Modbus exception: %d' % (except_code))
+            raise ModbusClientExceptionfrom_code(except_code)
         else:
             resp_slave_id, resp_func, resp_addr, resp_count, resp_crc = struct.unpack('>BBHHH', resp)
             if resp_slave_id != slave_id or resp_func != func or resp_addr != addr or resp_count != count:
@@ -1058,7 +1127,7 @@ class ModbusClientDeviceTCP(object):
             self.trace_func(s)
 
         if except_code:
-            raise ModbusClientException('Modbus exception %d' % (except_code))
+            raise ModbusClientException(except_code)
 
         return resp[(TCP_HDR_LEN + 3):]
 
@@ -1160,7 +1229,7 @@ class ModbusClientDeviceTCP(object):
             self.trace_func(s)
 
         if except_code:
-            raise ModbusClientException('Modbus exception: %d' % (except_code))
+            raise ModbusClientException(except_code)
 
     def write(self, addr, data):
         """ Write Modbus device registers. If no connection exists to the

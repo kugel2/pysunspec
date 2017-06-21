@@ -370,8 +370,10 @@ class ClientDeviceTwisted(device.Device):
                 # print 'trying base address %s' % (addr)
                 try:
                     data = yield self.read(addr, 3)
-                except modbus.ModbusClientException:
-                    # TODO: handle the exception number directly
+                except modbus.ModbusClientException as e:
+                    if e != modbus.ModbusClientException.illegal_data_address:
+                        raise
+
                     # TODO: twist this
                     if delay is not None:
                         time.sleep(delay)

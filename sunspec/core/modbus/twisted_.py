@@ -143,6 +143,10 @@ class Protocol(twisted.internet.protocol.Protocol,
 
         data = self.receivers[self.state](data)
 
+        # TODO: this doesn't seem a terribly clean way to catch the errbacks in the receiver
+        if self._deferred is None:
+            return
+
         if data is not None:
             self.setTimeout(None)
             logging.debug('dataReceived() calling back\n')
