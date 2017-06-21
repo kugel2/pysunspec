@@ -45,6 +45,7 @@ except:
     import elementtree.ElementTree as ET
 
 import sunspec.core.modbus.mbmap as mbmap
+import sunspec.core.util as util
 
 PARITY_NONE = 'N'
 PARITY_EVEN = 'E'
@@ -230,9 +231,24 @@ class ModbusClientRTUTwistedProtocol(sunspec.core.modbus.twisted_.Protocol):
 
         super()._transmit_request(request=request)
 
+    @twisted.internet.defer.inlineCallbacks
     def read(self, slave_id, addr, count, op, trace_func, max_count):
-        # TODO: handle max_count
+        data = bytearray()
 
+        div, mod = divmod(count, max_count)
+
+        counts = (max_count,) * div
+        if mod > 0:
+            counts += (mod,)
+
+        for c in counts:
+            d = yield self._read(slave_id, addr, c, op, trace_func)
+            data.extend(d)
+            addr += c
+
+        twisted.internet.defer.returnValue(bytes(data))
+
+    def _read(self, slave_id, addr, count, op, trace_func):
         self._slave_id = slave_id
         self._addr = addr
         self._trace_func = trace_func
@@ -247,9 +263,12 @@ class ModbusClientRTUTwistedProtocol(sunspec.core.modbus.twisted_.Protocol):
 
         return self.request(req, state=State.reading)
 
+    @twisted.internet.defer.inlineCallbacks
     def write(self, slave_id, addr, data, trace_func, max_count):
-        # TODO: handle max_count
+        for d in util.chunker(data, max_count):
+            yield self._write(slave_id, addr, bytes(d), trace_func)
 
+    def _write(self, slave_id, addr, data, trace_func):
         self._slave_id = slave_id
         self._addr = addr
         self._trace_func = trace_func

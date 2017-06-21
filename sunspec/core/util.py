@@ -247,3 +247,23 @@ class PathList(object):
             paths.append(p)
 
         return str(paths)
+
+
+def chunker(iterable, n):
+    "Collect data into fixed-length chunks or blocks except last due to lack of fill."
+    # chunker('ABCDEFG', 3) --> ABC DEF G"
+    type_ = type(iterable)
+    if type_ not in (tuple, list, bytes, bytearray, str):
+        type_ = tuple
+
+    i = iter(iterable)
+
+    while True:
+        # TODO: remove intermediate tuple once bug is fixed
+        # https://github.com/PythonCharmers/python-future/issues/288
+        chunk = type_(tuple(next(i) for _ in range(n)))
+
+        if len(chunk) > 0:
+            yield chunk
+        else:
+            break
