@@ -242,7 +242,6 @@ class ModbusClientRTUTwistedProtocol(sunspec.core.modbus.twisted_.Protocol):
             if not (self.data[1] & 0x80):
                 self.response_length += self.data[2]
                 self.length_found = True
-            # TODO: check for modbus exceptions
             else:
                 self.errback(ModbusClientException.from_code(self.data[2]))
                 return
@@ -313,7 +312,6 @@ class ModbusClientRTUTwistedProtocol(sunspec.core.modbus.twisted_.Protocol):
             if not (self.data[1] & 0x80):
                 self.response_length = 8
                 self.length_found = True
-            # TODO: check for modbus exceptions
             else:
                 self.errback(ModbusClientException.from_code(self.data[2]))
 
