@@ -167,6 +167,12 @@ def modbus_rtu_client_remove(name=None):
     if modbus_rtu_clients.get(name):
         del modbus_rtu_clients[name]
 
+def pack_rtu_read_request(slave_id, addr, count, op):
+    req = struct.pack('>BBHH', int(slave_id), op, int(addr), int(count))
+    req = bytes(req)
+    req += struct.pack('>H', computeCRC(req))
+    return req
+
 
 @enum.unique
 class State(enum.Enum):
@@ -223,9 +229,7 @@ class ModbusClientRTUTwistedProtocol(sunspec.core.modbus.twisted_.Protocol):
         self._addr = addr
         self._trace_func = trace_func
 
-        req = struct.pack('>BBHH', int(slave_id), op, int(addr), int(count))
-        req = bytes(req)
-        req += struct.pack('>H', computeCRC(req))
+        req = pack_rtu_read_request(slave_id, addr, count, op)
 
         if self._trace_func:
             s = '%s:%s[addr=%s] ->' % (self.name, str(slave_id), addr)
@@ -533,9 +537,7 @@ class ModbusClientRTU(object):
         len_found = False
         except_code = None
 
-        req = struct.pack('>BBHH', int(slave_id), op, int(addr), int(count))
-        req = bytes(req)
-        req += struct.pack('>H', computeCRC(req))
+        req = pack_rtu_read_request(slave_id, addr, count, op)
 
         if trace_func:
             s = '%s:%s[addr=%s] ->' % (self.name, str(slave_id), addr)
