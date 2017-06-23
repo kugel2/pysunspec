@@ -8,11 +8,13 @@ init:
 
 build_script:
   - SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%
-  - pip install --user virtualenv
+  - python -m pip install --user virtualenv
   - git submodule update --init
+  - python -m pip install -e .
   - python -m unittest discover -v sunspec
   - python -m pip wheel --wheel-dir dist --no-deps .
   - python setup.py sdist
+  - ps: Update-AppveyorBuild -Version "v$(venv\\Scripts\\python -c 'import sunspec; print(sunspec.__version__, end=\"\")') b$Env:APPVEYOR_BUILD_NUMBER"
 
 artifacts:
   - path: 'dist/*'
