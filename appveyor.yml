@@ -10,7 +10,7 @@ build_script:
   - SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%
   - python -m pip install --upgrade pip setuptools wheel
   - python -m pip install --user virtualenv
-  - python -m virtualenv -p python venv
+  - python -m virtualenv -p %PYTHON%/python.exe venv
   - git submodule update --init
   - venv/scripts/python -m pip install -e .
   - venv/scripts/python -m unittest discover -v sunspec
