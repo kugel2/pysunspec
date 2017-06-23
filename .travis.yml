@@ -8,6 +8,7 @@ python:
 
 install: 
     - pip install pyserial
+    - pip install wheel
     - git submodule update --init --recursive
     - python setup.py install
 
@@ -17,7 +18,16 @@ matrix:
         - python: 3.4
         - python: 3.5
 
-script: python -m unittest discover -v sunspec
+script:
+    - python -m unittest discover -v sunspec
+    - python -m pip wheel --wheel-dir dist --no-deps .
+    - python setup.py sdist
+
+addons:
+    artifacts: true
+        paths:
+            - $(ls dist)
+
 
 notifications:
     email: false
