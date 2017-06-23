@@ -1083,7 +1083,7 @@ class SunSpecClientDevice(object):
         self.device = client_device(device_type, slave_id, name, pathlist, baudrate, parity, ipaddr, ipport, timeout, trace, max_count=max_count)
         self.models = []
 
-        if twisted is not None and device_type != RTU_TWISTED:
+        if twisted is None or device_type != RTU_TWISTED:
             self.device.scan(progress=scan_progress, delay=scan_delay)
             self.prep()
 
