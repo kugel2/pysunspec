@@ -7,7 +7,6 @@
 """
 from setuptools import setup, find_packages
 setup(name = 'pysunspec',
-      version = '1.1.0.dev3',
       description = 'Python SunSpec Tools',
       author = ['Bob Fox'],
       author_email = ['bob.fox@loggerware.com'],
@@ -36,4 +35,10 @@ setup(name = 'pysunspec',
             'attrs',
             'click',
       ],
+      setup_requires=['vcversioner==2.16.0.0'],
+      vcversioner={
+            'version_module_paths': ['sunspec/_version.py'],
+            'vcs_args': ['git', '--git-dir', '%(root)s/.git', 'describe',
+                         '--tags', '--long', '--abbrev=999']
+      },
 )
