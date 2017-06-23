@@ -4,8 +4,11 @@ import logging
 
 import click
 import serial.tools.list_ports
-import twisted.internet.defer
-import twisted.internet.reactor
+try:
+    import twisted.internet.defer
+    import twisted.internet.reactor
+except ImportError:
+    twisted = None
 
 import sunspec.core.client
 
@@ -13,7 +16,8 @@ import sunspec.core.client
 __copyright__ = 'Copyright 2017, EPC Power Corp.'
 __license__ = 'GPLv2+'
 
-twisted.internet.defer.setDebugging(True)
+if twisted is not None:
+    twisted.internet.defer.setDebugging(True)
 
 # logging.getLogger().setLevel(logging.DEBUG)
 
@@ -97,96 +101,97 @@ def classic(name, slave_id, write):
         print('              Read: {}'.format(get_point()))
 
 
-@cli.command(name='twisted')
-@apply_options(*name_and_id_options)
-def twisted_(name, slave_id, write):
-    device = sunspec.core.client.SunSpecClientDevice(
-        device_type=sunspec.core.client.RTU_TWISTED,
-        slave_id=slave_id,
-        name=name,
-    )
-
-    d = twisted.internet.task.deferLater(
-        clock=twisted.internet.reactor,
-        delay=0,
-        callable=read_models,
-        device=device,
-    )
-
-    if None not in write:
-        model, point, value = write
-        d.addCallback(
-            lambda _: write_something(
-                device=device,
-                model=model,
-                point=point,
-                value=value,
-            )
+if twisted is not None:
+    @cli.command(name='twisted')
+    @apply_options(*name_and_id_options)
+    def twisted_(name, slave_id, write):
+        device = sunspec.core.client.SunSpecClientDevice(
+            device_type=sunspec.core.client.RTU_TWISTED,
+            slave_id=slave_id,
+            name=name,
         )
 
-    d.addCallback(stop_reactor)
-    d.addErrback(errbackhook)
-    d.addErrback(lambda _: stop_reactor(reason='exception raised'))
+        d = twisted.internet.task.deferLater(
+            clock=twisted.internet.reactor,
+            delay=0,
+            callable=read_models,
+            device=device,
+        )
 
-    twisted.internet.reactor.callLater(5, stop_reactor, reason='timeout')
+        if None not in write:
+            model, point, value = write
+            d.addCallback(
+                lambda _: write_something(
+                    device=device,
+                    model=model,
+                    point=point,
+                    value=value,
+                )
+            )
 
-    return twisted.internet.reactor.run()
+        d.addCallback(stop_reactor)
+        d.addErrback(errbackhook)
+        d.addErrback(lambda _: stop_reactor(reason='exception raised'))
+
+        twisted.internet.reactor.callLater(5, stop_reactor, reason='timeout')
+
+        return twisted.internet.reactor.run()
 
 
-@twisted.internet.defer.inlineCallbacks
-def read_models(device):
-    yield device.device.scan()
-    device.prep()
+    @twisted.internet.defer.inlineCallbacks
+    def read_models(device):
+        yield device.device.scan()
+        device.prep()
 
-    for model in [getattr(device, model) for model in device.models]:
+        for model in [getattr(device, model) for model in device.models]:
+            yield model.read()
+            print_model(model)
+
+
+    @twisted.internet.defer.inlineCallbacks
+    def write_something(device, model, point, value):
+        print('Testing by writing:')
+        print('    {} -> {}/{}'.format(value, model, point))
+        print()
+
+        model = getattr(device, model)
+
+        def get_point():
+            return getattr(model, point)
+
+        def set_point(v):
+            setattr(model, point, v)
+
         yield model.read()
-        print_model(model)
+        original = get_point()
+        print('              Read: {}'.format(get_point()))
+
+        set_point(value)
+        yield model.write()
+        print('Assigned and wrote: {}'.format(get_point()))
+
+        yield model.read()
+        print('              Read: {}'.format(get_point()))
+
+        set_point(original)
+        yield model.write()
+        print('Assigned and wrote: {}'.format(get_point()))
+
+        yield model.read()
+        print('              Read: {}'.format(get_point()))
 
 
-@twisted.internet.defer.inlineCallbacks
-def write_something(device, model, point, value):
-    print('Testing by writing:')
-    print('    {} -> {}/{}'.format(value, model, point))
-    print()
-    
-    model = getattr(device, model)
+    def stop_reactor(reason=None):
+        if reason is not None:
+            logging.warning('Exit forced due to: {}'.format(reason))
 
-    def get_point():
-        return getattr(model, point)
-
-    def set_point(v):
-        setattr(model, point, v)
-
-    yield model.read()
-    original = get_point()
-    print('              Read: {}'.format(get_point()))
-
-    set_point(value)
-    yield model.write()
-    print('Assigned and wrote: {}'.format(get_point()))
-
-    yield model.read()
-    print('              Read: {}'.format(get_point()))
-
-    set_point(original)
-    yield model.write()
-    print('Assigned and wrote: {}'.format(get_point()))
-
-    yield model.read()
-    print('              Read: {}'.format(get_point()))
+        twisted.internet.reactor.stop()
 
 
-def stop_reactor(reason=None):
-    if reason is not None:
-        logging.warning('Exit forced due to: {}'.format(reason))
+    def errbackhook(error):
+        logging.error(str(error))
 
-    twisted.internet.reactor.stop()
-
-
-def errbackhook(error):
-    logging.error(str(error))
-
-    return error
+        return error
 
 
 def print_model(model):
