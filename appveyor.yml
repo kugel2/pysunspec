@@ -19,7 +19,7 @@ build_script:
   - ps: Update-AppveyorBuild -Version "v$(venv\\Scripts\\python -c 'import sunspec; print(sunspec.__version__, end=\"\")') b$Env:APPVEYOR_BUILD_NUMBER"
 
 artifacts:
-  - path: 'dist\\*'
+  - path: 'dist/*'
 
 # https://www.appveyor.com/docs/how-to/rdp-to-build-worker/
 on_finish:
