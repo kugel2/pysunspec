@@ -11,6 +11,7 @@ except ImportError:
     twisted = None
 
 import sunspec.core.client
+import sunspec.core.util
 
 # See file COPYING in this source tree
 __copyright__ = 'Copyright 2017, EPC Power Corp.'
@@ -31,6 +32,20 @@ name_and_id_options = (
     click.option('--name', default='/dev/ttyUSB0'),
     click.option('--slave-id', default=1),
     click.option('--write', type=(str, str, float), default=(None,) * 3),
+    click.option(
+        '--smdx-path',
+        'smdx_path',
+        type=click.Path(
+            exists=True,
+            file_okay=False,
+            dir_okay=True,
+            writable=False,
+            readable=True,
+            resolve_path=True,
+        ),
+        default=(),
+        multiple=True
+    ),
 )
 
 
@@ -57,7 +72,8 @@ def ports():
 
 @cli.command()
 @apply_options(*name_and_id_options)
-def classic(name, slave_id, write):
+def classic(name, slave_id, write, smdx_path):
+    sunspec.core.device.file_pathlist = sunspec.core.util.PathList(smdx_path)
     device = sunspec.core.client.SunSpecClientDevice(
         device_type=sunspec.core.client.RTU,
         slave_id=slave_id,
@@ -104,7 +120,9 @@ def classic(name, slave_id, write):
 if twisted is not None:
     @cli.command(name='twisted')
     @apply_options(*name_and_id_options)
-    def twisted_(name, slave_id, write):
+    def twisted_(name, slave_id, write, smdx_path):
+        sunspec.core.device.file_pathlist = sunspec.core.util.PathList(
+            smdx_path)
         device = sunspec.core.client.SunSpecClientDevice(
             device_type=sunspec.core.client.RTU_TWISTED,
             slave_id=slave_id,
