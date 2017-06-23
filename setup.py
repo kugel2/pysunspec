@@ -20,20 +20,18 @@ setup(name = 'pysunspec',
       },
       extras_require={
             ':python_version < "3.4"': ['enum34'],
-            ':sys_platform == "linux2"': ['twisted', 'pyserial'],
-            ':sys_platform == "linux"': ['twisted', 'pyserial'],
-            ':sys_platform == "win32"': [
-                  'twisted[windows_platform]',
-                  # < 3 due to https://twistedmatrix.com/trac/ticket/8159
-                  'pyserial<3',
-            ],
-            ':sys_platform == "darwin"': ['twisted[osx_platform]', 'pyserial'],
+            'twisted:sys_platform == "linux2"': ['twisted'],
+            'twisted:sys_platform == "linux"': ['twisted'],
+            'twisted:sys_platform == "win32"': ['twisted[windows_platform]'],
+            'twisted:sys_platform == "darwin"': ['twisted[osx_platform]'],
             # TODO: and for cygwin?
       },
       install_requires = [
             'future',
             'attrs',
             'click',
+            # Have to manually downgrade to pyserial<3 due to https://twistedmatrix.com/trac/ticket/8159
+            'pyserial',
       ],
       setup_requires=['vcversioner==2.16.0.0'],
       vcversioner={
