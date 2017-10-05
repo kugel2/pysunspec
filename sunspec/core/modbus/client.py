@@ -704,7 +704,7 @@ class ModbusClientRTU(object):
             raise ModbusClientError('CRC error')
 
         if except_code:
-            raise ModbusClientExceptionfrom_code(except_code)
+            raise ModbusClientException.from_code(except_code)
         else:
             resp_slave_id, resp_func, resp_addr, resp_count, resp_crc = struct.unpack('>BBHHH', resp)
             if resp_slave_id != slave_id or resp_func != func or resp_addr != addr or resp_count != len(data)//2:
