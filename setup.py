@@ -30,7 +30,6 @@ setup(name = 'pysunspec',
             'future',
             'attrs',
             'click',
-            # Have to manually downgrade to pyserial<3 due to https://twistedmatrix.com/trac/ticket/8159
             'pyserial',
       ],
       setup_requires=['vcversioner==2.16.0.0'],
