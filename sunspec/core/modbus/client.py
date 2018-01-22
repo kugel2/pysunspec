@@ -69,6 +69,16 @@ class ModbusClientTimeout(ModbusClientError):
     pass
 
 
+def wait_until(target, clock):
+    while True:
+        remaining = target - clock()
+
+        if remaining > 0:
+            time.sleep(remaining)
+        else:
+            break
+
+
 @attr.s
 class _ModbusClientException(Exception):
     code = attr.ib()
@@ -571,11 +581,10 @@ class ModbusClientRTU(object):
                 s += '%02X' % (ord(c))
             trace_func(s)
 
-        now = time.monotonic()
-        delta = now - self.last_receive_completion
-        remaining = self.deadtime - delta
-        if remaining > 0:
-            time.sleep(remaining)
+        wait_until(
+            target=self.last_receive_completion + self.deadtime,
+            clock=time.monotonic,
+        )
 
         self.serial.flushInput()
         try:
@@ -682,11 +691,10 @@ class ModbusClientRTU(object):
                 s += '%02X' % (ord(c))
             trace_func(s)
 
-        now = time.monotonic()
-        delta = now - self.last_receive_completion
-        remaining = self.deadtime - delta
-        if remaining > 0:
-            time.sleep(remaining)
+        wait_until(
+            target=self.last_receive_completion + self.deadtime,
+            clock=time.monotonic,
+        )
 
         self.serial.flushInput()
         try:
