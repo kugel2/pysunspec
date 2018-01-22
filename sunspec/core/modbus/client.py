@@ -1,4 +1,3 @@
-
 """
     Copyright (C) 2017 SunSpec Alliance
 
@@ -34,6 +33,7 @@ import os
 import socket
 import struct
 import serial
+import time
 try:
     import twisted.internet
     import twisted.internet.serialport
@@ -483,6 +483,8 @@ class ModbusClientRTU(object):
         self.timeout = .5
         self.write_timeout = .5
         self.devices = {}
+        self.deadtime = 44 / int(self.baudrate)
+        self.last_receive_completion = -self.deadtime
 
         self.open()
 
@@ -569,26 +571,35 @@ class ModbusClientRTU(object):
                 s += '%02X' % (ord(c))
             trace_func(s)
 
+        now = time.monotonic()
+        delta = now - self.last_receive_completion
+        remaining = self.deadtime - delta
+        if remaining > 0:
+            time.sleep(remaining)
+
         self.serial.flushInput()
         try:
             self.serial.write(req)
         except Exception as e:
             raise ModbusClientError('Serial write error: %s' % str(e))
 
-        while len_remaining > 0:
-            c = self.serial.read(len_remaining)
-            len_read = len(c);
-            if len_read > 0:
-                resp += c
-                len_remaining -= len_read
-                if len_found is False and len(resp) >= 5:
-                    if not (resp[1] & 0x80):
-                        len_remaining = (resp[2] + 5) - len(resp)
-                        len_found = True
-                    else:
-                        except_code = resp[2]
-            else:
-                raise ModbusClientTimeout('Response timeout')
+        try:
+            while len_remaining > 0:
+                c = self.serial.read(len_remaining)
+                len_read = len(c);
+                if len_read > 0:
+                    resp += c
+                    len_remaining -= len_read
+                    if len_found is False and len(resp) >= 5:
+                        if not (resp[1] & 0x80):
+                            len_remaining = (resp[2] + 5) - len(resp)
+                            len_found = True
+                        else:
+                            except_code = resp[2]
+                else:
+                    raise ModbusClientTimeout('Response timeout')
+        finally:
+            self.last_receive_completion = time.monotonic()
 
         if trace_func:
             s = '%s:%s[addr=%s] <--' % (self.name, str(slave_id), addr)
@@ -671,26 +682,35 @@ class ModbusClientRTU(object):
                 s += '%02X' % (ord(c))
             trace_func(s)
 
+        now = time.monotonic()
+        delta = now - self.last_receive_completion
+        remaining = self.deadtime - delta
+        if remaining > 0:
+            time.sleep(remaining)
+
         self.serial.flushInput()
         try:
             self.serial.write(req)
         except Exception as e:
             raise ModbusClientError('Serial write error: %s' % str(e))
 
-        while len_remaining > 0:
-            c = self.serial.read(len_remaining)
-            len_read = len(c);
-            if len_read > 0:
-                resp += c
-                len_remaining -= len_read
-                if len_found is False and len(resp) >= 5:
-                    if not (resp[1] & 0x80):
-                        len_remaining = 8 - len(resp)
-                        len_found = True
-                    else:
-                        except_code = resp[2]
-            else:
-                raise ModbusClientTimeout('Response timeout')
+        try:
+            while len_remaining > 0:
+                c = self.serial.read(len_remaining)
+                len_read = len(c);
+                if len_read > 0:
+                    resp += c
+                    len_remaining -= len_read
+                    if len_found is False and len(resp) >= 5:
+                        if not (resp[1] & 0x80):
+                            len_remaining = 8 - len(resp)
+                            len_found = True
+                        else:
+                            except_code = resp[2]
+                else:
+                    raise ModbusClientTimeout('Response timeout')
+        finally:
+            self.last_receive_completion = time.monotonic()
 
         if trace_func:
             s = '%s:%s[addr=%s] <--' % (self.name, str(slave_id), addr)
