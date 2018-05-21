@@ -1137,7 +1137,7 @@ class ModbusClientDeviceTCP(object):
             self.trace_func(s)
 
         if except_code:
-            raise ModbusClientException(except_code)
+            raise ModbusClientException.from_code(except_code)
 
         return resp[(TCP_HDR_LEN + 3):]
 
@@ -1239,7 +1239,7 @@ class ModbusClientDeviceTCP(object):
             self.trace_func(s)
 
         if except_code:
-            raise ModbusClientException(except_code)
+            raise ModbusClientException.from_code(except_code)
 
     def write(self, addr, data):
         """ Write Modbus device registers. If no connection exists to the
