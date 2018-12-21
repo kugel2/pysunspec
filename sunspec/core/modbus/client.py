@@ -1035,7 +1035,10 @@ class ModbusClientDeviceTCP(object):
             Maximum register count for a single Modbus request.
     """
 
-    def __init__(self, slave_id, ipaddr, ipport=502, timeout=None, ctx=None, trace_func=None, max_count=REQ_COUNT_MAX, test=False):
+    def __init__(self, slave_id, ipaddr, ipport=502, timeout=None, ctx=None, trace_func=None, max_count=None, test=False):
+        if max_count is None:
+            max_count = REQ_COUNT_MAX
+
         self.slave_id = slave_id
         self.ipaddr = ipaddr
         self.ipport = ipport
