@@ -1,3 +1,4 @@
 [submodule "sunspec/models"]
 	path = sunspec/models
-	url = https://github.com/sunspec/models.git
+	url = https://github.com/altendky/models.git
+	branch = master_plus_pull_requests
