@@ -130,7 +130,7 @@ class ClientDevice(device.Device):
         self.slave_id = slave_id
         self.modbus_device = None
         self.retry_count = 2
-        self.base_addr_list = [40000, 0, 50000]
+        self.base_addr_list = [40000, 0, 50000, 39999, 40001, 40002, 40003]
 
         try:
             if device_type == RTU:
@@ -244,7 +244,7 @@ class ClientDevice(device.Device):
             model_id = util.data_to_u16(data[4:6])
             addr = self.base_addr + 2
 
-            while model_id != suns.SUNS_END_MODEL_ID:
+            while (model_id != suns.SUNS_END_MODEL_ID and model_id != 0):
                 # read model and model len separately due to some devices not supplying
                 # count for the end model id
                 data = self.read(addr + 1, 1)
